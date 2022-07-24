@@ -142,7 +142,7 @@ It uses [the latest BaseVM 13.1](conf/default.release.conf) by default, you can 
 ...
 ```
 
-All the supported releases are here: [BaseVM  12.3, 13.0, 13.1, ](conf)
+All the supported releases are here: [BaseVM  "12.3, 13.0, 13.1, ](conf)
 
 
 # Under the hood
