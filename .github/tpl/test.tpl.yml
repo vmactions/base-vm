@@ -17,7 +17,7 @@ jobs:
   test:
     strategy:
       matrix:
-        release: [ {{ALL_RELEASES}} ""]
+        release: [ "{{ALL_RELEASES}}"]
     runs-on: macos-12
     name: A job to run test {{VM_NAME}}
     env:
