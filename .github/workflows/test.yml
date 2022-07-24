@@ -1,0 +1,42 @@
+
+name: Test
+
+on:
+  push:
+    branches:
+      - '*'
+    paths:
+      - '**.sh'
+      - '.github/workflows/test.yml'
+      - 'index.js'
+      - 'conf/*'
+      - 'hooks/*'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        release: [ {{ALL_RELEASES}} ""]
+    runs-on: macos-12
+    name: A job to run test {{VM_NAME}}
+    env:
+      MYTOKEN : ${{ secrets.MYTOKEN }}
+      MYTOKEN2: "value2"
+    steps:
+    - uses: actions/checkout@v2
+    - name: Test in {{VM_NAME}}
+      id: test
+      uses: {{GITHUB_REPOSITORY}}@main
+      with:
+        envs: 'MYTOKEN MYTOKEN2'
+        prepare: |
+          {{VM_PREPARE}}
+        mem: 2048
+        release: ${{ matrix.release }}
+        nat: |
+          "8080": "80"
+          "8443": "443"
+          udp:"8081": "80"
+        usesh: true
+        run: |
+{{VM_RUN}}
