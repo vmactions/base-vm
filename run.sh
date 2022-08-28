@@ -174,6 +174,7 @@ EOF
 }
 
 runSSHFSInVM() {
+  # remove these when using the vbox v0.0.2 and newer
   echo "Reloading sshd services in the Host"
   sudo sh <<EOF
   echo "" >>/etc/ssh/sshd_config
@@ -181,19 +182,26 @@ runSSHFSInVM() {
 EOF
   sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist
   sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
-  echo "Insalling $VM_SSHFS_PKG"
-  ssh "$osname" sh <<EOF
+
+
+
+
+  if [ "$VM_SSHFS_PKG" ]; then
+    echo "Insalling $VM_SSHFS_PKG"
+    ssh "$osname" sh <<EOF
 
 $VM_INSTALL_CMD $VM_SSHFS_PKG
 
 EOF
-  echo "Run sshfs"
-  ssh "$osname" sh <<EOF
+    echo "Run sshfs"
+    ssh "$osname" sh <<EOF
 echo 'StrictHostKeyChecking=accept-new' >.ssh/config
 
 sshfs -o allow_other,default_permissions host:work /Users/runner/work
 
 EOF
+
+  fi
 
 
 }
