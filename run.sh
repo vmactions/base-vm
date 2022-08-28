@@ -61,8 +61,8 @@ export VM_LOGIN_TAG
 vmsh="$VM_VBOX"
 
 if [ ! -e "$vmsh" ]; then
-  echo "Downloading vbox to: $PWD"
-  wget "$VM_VBOX_LINK"
+  echo "Downloading vbox ${SEC_VBOX:-$VM_VBOX_LINK} to: $PWD"
+  wget -O $vmsh "${SEC_VBOX:-$VM_VBOX_LINK}"
 fi
 
 
@@ -191,7 +191,7 @@ EOF
   ssh "$osname" sh <<EOF
 echo 'StrictHostKeyChecking=accept-new' >.ssh/config
 
-sshfs -o allow_other,default_permissions runner@10.0.2.2:work /Users/runner/work
+sshfs -o allow_other,default_permissions host:work /Users/runner/work
 
 EOF
 
