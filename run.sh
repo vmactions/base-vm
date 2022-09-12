@@ -243,6 +243,13 @@ waitForBooting() {
 }
 
 
+showDebugInfo() {
+  pwd && ls -lah
+  bash -c 'pwd && ls -lah ~/.ssh/ && cat ~/.ssh/config'
+  cat $_conf_filename
+
+}
+
 "$@"
 
 
