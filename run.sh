@@ -52,6 +52,7 @@ export VM_ISO_LINK
 export VM_OS_NAME
 export VM_RELEASE
 export VM_INSTALL_CMD
+export VM_SSHFS_PKG
 export VM_LOGIN_TAG
 
 
