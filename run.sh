@@ -184,9 +184,9 @@ EOF
   sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
 
 
-
-
-  if [ "$VM_SSHFS_PKG" ]; then
+  if [ -e "hooks/onRunSSHFS.sh" ] && ssh "$osname" sh <hooks/onRunSSHFS.sh; then
+    echo "OK";
+  elif [ "$VM_SSHFS_PKG" ]; then
     echo "Insalling $VM_SSHFS_PKG"
     ssh "$osname" sh <<EOF
 
