@@ -18,7 +18,7 @@ jobs:
       with:
         protocol: http
         port: 8000
-    - name: Run establish a ngrok tunnel
+    - name: Run vnc tunnel
       id: test
       uses: vmactions/ngrok-tunnel@v0.0.1
       with:
