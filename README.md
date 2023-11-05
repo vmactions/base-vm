@@ -50,7 +50,7 @@ The latest major version is: ``, which is the most recommended to use. (You can 
 
 
 
-
+The `runs-on: ubuntu-22.04` must be `ubuntu-22.04`.
 
 The `envs: 'MYTOKEN MYTOKEN2'` is the env names that you want to pass into the vm.
 
@@ -172,7 +172,7 @@ It uses [the latest BaseVM 13.1](conf/default.release.conf) by default, you can 
       id: test
       uses: vmactions/base-vm@
       with:
-        release: 13.0
+        release: 13.2
 ...
 ```
 
