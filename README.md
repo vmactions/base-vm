@@ -17,7 +17,7 @@ on: [push]
 
 jobs:
   test:
-    runs-on: macos-12
+    runs-on: ubuntu-22.04
     name: A job to run test in BaseVM
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
@@ -50,7 +50,7 @@ The latest major version is: ``, which is the most recommended to use. (You can 
 
 
 
-The `runs-on: macos-12` must be `macos-12`.
+
 
 The `envs: 'MYTOKEN MYTOKEN2'` is the env names that you want to pass into the vm.
 

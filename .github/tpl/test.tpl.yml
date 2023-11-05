@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         release: [ {{ALL_RELEASES}}, ""]
-    runs-on: macos-12
+    runs-on: ubuntu-22.04
     name: A job to run test sshfs {{VM_NAME}}
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
@@ -60,7 +60,7 @@ jobs:
     strategy:
       matrix:
         release: [ {{ALL_RELEASES}}, ""]
-    runs-on: macos-12
+    runs-on: ubuntu-22.04
     name: A job to run test {{VM_NAME}}
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
