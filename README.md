@@ -181,10 +181,9 @@ All the supported releases are here: [BaseVM  12.3, 13.0, 13.1](conf)
 
 # Under the hood
 
-GitHub only supports Ubuntu, Windows and MacOS out of the box.
+We use Qemu and Libvirt to run the BaseVM VM.
 
-However, the MacOS support virtualization. It has VirtualBox installed.
 
-So, we run the BaseVM VM in VirtualBox on MacOS.
+
 
 
