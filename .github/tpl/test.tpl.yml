@@ -31,7 +31,7 @@ jobs:
         release: [ {{ALL_RELEASES}}, ""]
         runs: [ "ubuntu-22.04"]
     runs-on: ${{ matrix.runs }}
-    name: A job to run test sshfs {{VM_NAME}}
+    name: sshfs {{VM_NAME}}
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
@@ -64,7 +64,7 @@ jobs:
         release: [ {{ALL_RELEASES}}, ""]
         runs: [ "ubuntu-22.04"]
     runs-on: ${{ matrix.runs }}
-    name: A job to run test {{VM_NAME}}
+    name: {{VM_NAME}}
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
