@@ -60,7 +60,7 @@ jobs:
           tree $HOME/work/
     - name: Test NAT
       run: 
-        ssh -p 10022 root@localhost "uname -a;whoami;pwd"
+        ssh -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
 
   test:
     strategy:
@@ -95,7 +95,7 @@ jobs:
 {{VM_RUN}}
     - name: Test NAT
       run: 
-        ssh -p 10022 root@localhost "uname -a;whoami;pwd"
+        ssh -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
 
 
 
