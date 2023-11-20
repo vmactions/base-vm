@@ -37,10 +37,10 @@ jobs:
       MYTOKEN2: "value2"
       SEC_VBOX : ${{ secrets.SEC_VBOX }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Test in {{VM_NAME}}
       id: test
-      uses: {{GITHUB_REPOSITORY}}@main
+      uses: {{GITHUB_REPOSITORY}}@{{GITHUB_RUN_ID}}
       with:
         envs: 'MYTOKEN MYTOKEN2'
         prepare: |
@@ -60,7 +60,7 @@ jobs:
           tree $HOME/work/
     - name: Test NAT
       run: 
-        ssh -p 10022 root@localost "uname -a;whoami;pwd"
+        ssh -p 10022 root@localhost "uname -a;whoami;pwd"
 
   test:
     strategy:
@@ -74,10 +74,10 @@ jobs:
       MYTOKEN2: "value2"
       SEC_VBOX : ${{ secrets.SEC_VBOX }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Test in {{VM_NAME}}
       id: test
-      uses: {{GITHUB_REPOSITORY}}@main
+      uses: {{GITHUB_REPOSITORY}}@{{GITHUB_RUN_ID}}
       with:
         envs: 'MYTOKEN MYTOKEN2'
         prepare: |
@@ -95,7 +95,7 @@ jobs:
 {{VM_RUN}}
     - name: Test NAT
       run: 
-        ssh -p 10022 root@localost "uname -a;whoami;pwd"
+        ssh -p 10022 root@localhost "uname -a;whoami;pwd"
 
 
 
