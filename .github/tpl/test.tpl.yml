@@ -36,13 +36,20 @@ jobs:
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
       SEC_VBOX : ${{ secrets.SEC_VBOX }}
+      DEBUG: 1
     steps:
     - uses: actions/checkout@v4
+    - name: Creating Web console
+      uses: vmactions/cf-tunnel@v0
+      id: tunnel
+      with:
+        protocol: http
+        port: 8000
     - name: Test in {{VM_NAME}}
       id: test
       uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
       with:
-        envs: 'MYTOKEN MYTOKEN2'
+        envs: 'DEBUG MYTOKEN MYTOKEN2'
         prepare: |
           {{VM_PREPARE}}
         mem: 2048
@@ -60,7 +67,7 @@ jobs:
           tree $HOME/work/
     - name: Test NAT
       run: 
-        ssh -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
+        ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
 
   test:
     strategy:
@@ -95,7 +102,7 @@ jobs:
 {{VM_RUN}}
     - name: Test NAT
       run: 
-        ssh -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
+        ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
 
 
 
