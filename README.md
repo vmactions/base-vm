@@ -17,7 +17,7 @@ on: [push]
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: A job to run test in BaseVM
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
@@ -49,8 +49,8 @@ jobs:
 The latest major version is: ``, which is the most recommended to use. (You can also use the latest full version: ``)  
 
 
+If you are migrating from the previous `v0`, please change the `runs-on: ` to `runs-on: ubuntu-latest`
 
-The `runs-on: ubuntu-22.04` must be `ubuntu-22.04`.
 
 The `envs: 'MYTOKEN MYTOKEN2'` is the env names that you want to pass into the vm.
 
@@ -162,7 +162,7 @@ The default memory of the VM is 6144MB, you can use `mem` option to set the memo
 
 
 
-It uses [the latest BaseVM 13.1](conf/default.release.conf) by default, you can use `release` option to use another version of BaseVM:
+It uses [the BaseVM 13.1](conf/default.release.conf) by default, you can use `release` option to use another version of BaseVM:
 
 ```
 ...
