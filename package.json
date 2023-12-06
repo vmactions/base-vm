@@ -1,6 +1,6 @@
 {
   "name": "vmactions-{{VM_NAME}}",
-  "version": "0.0.1",
+  "version": "{{LATEST_VERSION_NUMBER}}",
   "description": "GitHub actions for {{VM_NAME}}",
   "main": "index.js",
   "repository": {
