@@ -76,7 +76,11 @@ jobs:
           else
             #has changes:
             rm -f test.yml.back
+            rm -rf base-vm
+            git diff
             #commit all changes and get new hash
+            git config  user.email "ghactions@vmactions.org"
+            git config  user.name "Generate.yml"
             git add .
             git commit -m "Update"
             newHash="$(git rev-parse main)"
