@@ -28,7 +28,7 @@ jobs:
     if: ${{ !contains(github.repository, 'solaris') && !contains(github.repository, 'dragonflybsd') && !contains(github.repository, 'omnios')}}
     strategy:
       matrix:
-        release: [ {{ALL_RELEASES}}, ""]
+        release: [ {{TEST_RELEASES}}, ""]
         runs: [ "ubuntu-22.04"]
     runs-on: ${{ matrix.runs }}
     name: sshfs {{VM_NAME}}
@@ -71,7 +71,7 @@ jobs:
   test:
     strategy:
       matrix:
-        release: [ {{ALL_RELEASES}}, ""]
+        release: [ {{TEST_RELEASES}}, ""]
         runs: [ "ubuntu-22.04"]
     runs-on: ${{ matrix.runs }}
     name: {{VM_NAME}}
