@@ -172,7 +172,7 @@ It uses [the BaseVM 13.1](conf/default.release.conf) by default, you can use `re
       id: test
       uses: vmactions/base-vm@
       with:
-        release: 13.2
+        release: "13.2"
 ...
 ```
 
