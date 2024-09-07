@@ -163,6 +163,21 @@ The default memory of the VM is 6144MB, you can use `mem` option to set the memo
 ```
 
 
+The default cpu cores of the VM is 2, you can use `cpu` option to set the cpu cores:
+
+```
+...
+    steps:
+    - uses: actions/checkout@v4
+    - name: Test
+      id: test
+      uses: vmactions/base-vm@
+      with:
+        envs: 'MYTOKEN MYTOKEN2'
+        usesh: true
+        cpu: 3
+...
+```
 
 It uses [the BaseVM 13.1](conf/default.release.conf) by default, you can use `release` option to use another version of BaseVM:
 
