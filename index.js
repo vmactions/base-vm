@@ -2,6 +2,7 @@ const core = require('@actions/core');
 const exec = require('@actions/exec');
 const fs = require("fs");
 const path = require("path");
+const os = require('os');
 
 
 var workingDir = __dirname;
@@ -33,6 +34,12 @@ async function shell(cmd, cdToScriptHome = true) {
 async function setup(nat, mem, cpu) {
   try {
     core.startGroup("Importing VM");
+    if(!cpu) {
+      cpu =  os.cpus().length;//use the system all cores
+    }
+    core.info("Use cpu: " + cpu);
+
+
     await shell("bash run.sh importVM  '" + mem + "'  '" + cpu + "'");
     core.endGroup();
 

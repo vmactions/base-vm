@@ -159,7 +159,7 @@ The default memory of the VM is 6144MB, you can use `mem` option to set the memo
 ```
 
 
-The default cpu cores of the VM is 2, you can use `cpu` option to set the cpu cores:
+The VM is using all the cpu cores of the host by default, you can use `cpu` option to change the cpu cores:
 
 ```
 ...
