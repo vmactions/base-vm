@@ -68,6 +68,8 @@ jobs:
             exit 1
           fi
           echo "TEST_ENV=abc" >>${GITHUB_ENV}
+{{VM_RUN}}
+
     - name: Test NAT
       run:
         echo "TEST_ENV=$TEST_ENV"
