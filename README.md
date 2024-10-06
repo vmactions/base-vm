@@ -196,6 +196,34 @@ It uses [the BaseVM 13.1](conf/default.release.conf) by default, you can use `re
 All the supported releases are here: BaseVM  12.3, 13.0, 13.1, test.releases [See all here](conf)
 
 
+
+
+Support custom shell:
+
+```
+...
+    steps:
+    - uses: actions/checkout@v4
+    - name: Test
+      id: vm
+      uses: vmactions/base-vm@
+    - name: Custom shell step 1
+	  shell: {{VM_OS_NAME}} {0}
+	  run: |
+	    cd $GITHUB_WORKSPACE;
+        pwd
+        echo "this is step 1, running inside the VM"
+    - name: Custom shell step 2
+	  shell: {{VM_OS_NAME}} {0}
+	  run: |
+	    cd $GITHUB_WORKSPACE;
+        pwd
+        echo "this is step 2, running inside the VM"
+...
+```
+
+
+
 # Under the hood
 
 We use Qemu and Libvirt to run the BaseVM VM.
