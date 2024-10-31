@@ -215,9 +215,11 @@ Support custom shell:
 ...
     steps:
     - uses: actions/checkout@v4
-    - name: Test
+    - name: Start VM
       id: vm
       uses: vmactions/base-vm@
+      with:
+        sync: sshfs
     - name: Custom shell step 1
       shell: {{VM_OS_NAME}} {0}
       run: |
