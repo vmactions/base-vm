@@ -60,6 +60,7 @@ export VM_OS_NAME
 export VM_RELEASE
 export VM_INSTALL_CMD
 export VM_SSHFS_PKG
+export VM_NFS_CMD
 export VM_LOGIN_TAG
 export VM_OCR
 export VM_DISK
@@ -273,6 +274,21 @@ EOF
   fi
 
 
+}
+
+runNFSInVM() {
+  if [ "$VM_NFS_CMD" ]; then
+    echo "Installing NFS on host"
+    sudo apt-get install -y nfs-kernel-server
+    echo "$HOME/work *(rw,async,no_subtree_check,anonuid=$(id -u),anongid=$(id -g))" | sudo tee -a /etc/exports
+    sudo exportfs -a
+
+    echo "Configuring NFS in VM"
+    ssh "$osname" sh <<EOF
+$VM_NFS_CMD
+EOF
+    echo "Done with NFS"
+  fi
 }
 
 
