@@ -277,12 +277,14 @@ EOF
 }
 
 runNFSInVM() {
-  if [ "$VM_NFS_CMD" ]; then
-    echo "Installing NFS on host"
-    sudo apt-get install -y nfs-kernel-server
-    echo "$HOME/work *(rw,async,no_subtree_check,anonuid=$(id -u),anongid=$(id -g))" | sudo tee -a /etc/exports
-    sudo exportfs -a
+  echo "Installing NFS on host"
+  sudo apt-get install -y nfs-kernel-server
+  echo "$HOME/work *(rw,async,no_subtree_check,anonuid=$(id -u),anongid=$(id -g))" | sudo tee -a /etc/exports
+  sudo exportfs -a
 
+  if [ -e "hooks/onRunNFS.sh" ] && ssh "$osname" sh <hooks/onRunNFS.sh; then
+    echo "OK";
+  elif [ "$VM_NFS_CMD" ]; then
     echo "Configuring NFS in VM"
     ssh "$osname" sh <<EOF
 $VM_NFS_CMD
