@@ -282,7 +282,7 @@ runNFSInVM() {
   echo "$HOME/work *(rw,async,no_subtree_check,anonuid=$(id -u),anongid=$(id -g))" | sudo tee -a /etc/exports
   sudo exportfs -a
 
-  if [ -e "hooks/onRunNFS.sh" ] && ssh "$osname" sh <hooks/onRunNFS.sh; then
+  if [ -e "hooks/onRunNFS.sh" ] && ssh "$osname" env "RUNNER_HOME=$HOME" sh <hooks/onRunNFS.sh; then
     echo "OK";
   elif [ "$VM_NFS_CMD" ]; then
     echo "Configuring NFS in VM"
