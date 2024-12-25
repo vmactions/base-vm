@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        runs: [ "ubuntu-22.04", "ubuntu-24.04", "ubuntu-latest"]
+        runs: [ "ubuntu-22.04", "ubuntu-24.04"]
     runs-on: ${{ matrix.runs }}
     name: sshfs {{VM_NAME}}
     env:
@@ -87,7 +87,7 @@ jobs:
     strategy:
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        runs: [ "ubuntu-22.04", "ubuntu-24.04", "ubuntu-latest"]
+        runs: [ "ubuntu-22.04", "ubuntu-24.04"]
     runs-on: ${{ matrix.runs }}
     name: nfs {{VM_NAME}}
     env:
@@ -146,7 +146,7 @@ jobs:
     strategy:
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        runs: [ "ubuntu-22.04", "ubuntu-24.04", "ubuntu-latest"]
+        runs: [ "ubuntu-22.04", "ubuntu-24.04"]
     runs-on: ${{ matrix.runs }}
     name: {{VM_NAME}}
     env:
