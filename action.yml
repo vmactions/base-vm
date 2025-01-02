@@ -10,6 +10,9 @@ inputs:
   release:
     description: 'The release version of {{VM_NAME}} vm'
     required: false
+  arch:
+    description: 'The cpu architecture of {{VM_NAME}} vm'
+    required: false
   envs:
     description: 'The envs to pass into {{VM_NAME}} vm'
     required: false
