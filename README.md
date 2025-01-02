@@ -203,6 +203,25 @@ It uses [the BaseVM 13.1](conf/default.release.conf) by default, you can use `re
 ...
 ```
 
+
+## 6. Select architecture
+
+The vm is using x86_64(AMD64) by default, but you can use `arch` option to change the architecture:
+
+```
+...
+    steps:
+    - uses: actions/checkout@v4
+    - name: Test
+      id: test
+      uses: vmactions/base-vm@
+      with:
+        release: "13.2"
+        arch: aarch64
+...
+```
+
+
 All the supported releases are here:
 
 
@@ -220,7 +239,7 @@ All the supported releases are here:
 
 
 
-## 6. Custom shell
+## 7. Custom shell
 
 Support custom shell:
 
