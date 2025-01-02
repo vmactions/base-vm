@@ -25,12 +25,7 @@ concurrency:
 
 jobs:
   testsshfs:
-    if: ${{ !contains(github.repository, 'solaris') && 
-            !contains(github.repository, 'dragonflybsd') && 
-            !contains(github.repository, 'omnios') && 
-            hashFiles('conf/${{ matrix.release }}-${{ matrix.arch }}.conf') != '' || 
-             matrix.release == '' || 
-             matrix.arch == '') }}
+    if: ${{ !contains(github.repository, 'solaris') && !contains(github.repository, 'dragonflybsd') && !contains(github.repository, 'omnios')}}
     strategy:
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
@@ -46,6 +41,18 @@ jobs:
       DEBUG: 1
     steps:
     - uses: actions/checkout@v4
+    - name: Check arch
+      run: |
+        if [ -z "${{ matrix.release }}" ]; then
+          #ok, go ahead
+        elif [ -z "${{ matrix.arch }}" ]; then
+          #ok, go ahead
+        elif [ -e "conf/${{ matrix.release }}-${{ matrix.arch }}.conf" ]
+          #ok, go ahead
+        else
+          echo "The release ${{ matrix.release }} doesn't support ${{ matrix.arch }}, skip."
+          exit 0
+        fi
     - name: Creating Web console
       uses: vmactions/cf-tunnel@v0
       id: tunnel
@@ -91,13 +98,17 @@ jobs:
         pwd
 {{VM_RUN}}
 
+
+
+
+
+
   testnfs:
     strategy:
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
         arch: [ "aarch64", ""]
         runs: [ "ubuntu-24.04"]
-    if: ${{ exists('conf/${{ matrix.release }}-${{ matrix.arch }}.txt') || "${{ matrix.release }}" == '' || "${{ matrix.arch }}"" == '' }}
     runs-on: ${{ matrix.runs }}
     name: nfs {{VM_NAME}}
     env:
@@ -107,6 +118,18 @@ jobs:
       DEBUG: 1
     steps:
     - uses: actions/checkout@v4
+    - name: Check arch
+      run: |
+        if [ -z "${{ matrix.release }}" ]; then
+          #ok, go ahead
+        elif [ -z "${{ matrix.arch }}" ]; then
+          #ok, go ahead
+        elif [ -e "conf/${{ matrix.release }}-${{ matrix.arch }}.conf" ]
+          #ok, go ahead
+        else
+          echo "The release ${{ matrix.release }} doesn't support ${{ matrix.arch }}, skip."
+          exit 0
+        fi
     - name: Creating Web console
       uses: vmactions/cf-tunnel@v0
       id: tunnel
@@ -153,13 +176,16 @@ jobs:
 {{VM_RUN}}
 
 
+
+
+
+
   test:
     strategy:
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
         arch: [ "aarch64", ""]
         runs: [ "ubuntu-24.04"]
-    if: ${{ exists('conf/${{ matrix.release }}-${{ matrix.arch }}.txt') || "${{ matrix.release }}" == '' || "${{ matrix.arch }}"" == '' }}
     runs-on: ${{ matrix.runs }}
     name: {{VM_NAME}}
     env:
@@ -168,6 +194,18 @@ jobs:
       SEC_VBOX : ${{ secrets.SEC_VBOX }}
     steps:
     - uses: actions/checkout@v4
+    - name: Check arch
+      run: |
+        if [ -z "${{ matrix.release }}" ]; then
+          #ok, go ahead
+        elif [ -z "${{ matrix.arch }}" ]; then
+          #ok, go ahead
+        elif [ -e "conf/${{ matrix.release }}-${{ matrix.arch }}.conf" ]
+          #ok, go ahead
+        else
+          echo "The release ${{ matrix.release }} doesn't support ${{ matrix.arch }}, skip."
+          exit 0
+        fi
     - name: Test in {{VM_NAME}}
       id: test
       uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
