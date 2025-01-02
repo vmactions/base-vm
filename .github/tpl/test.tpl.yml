@@ -42,27 +42,33 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Check arch
+      id: check
       run: |
         if [ -z "${{ matrix.release }}" ]; then
           #ok, go ahead
           echo "release is empty"
+          echo "run=true" >> $GITHUB_OUTPUT
         elif [ -z "${{ matrix.arch }}" ]; then
           #ok, go ahead
           echo "arch is empty"
+          echo "run=true" >> $GITHUB_OUTPUT
         elif [ -e "conf/${{ matrix.release }}-${{ matrix.arch }}.conf" ]; then
           #ok, go ahead
           echo "conf exists: conf/${{ matrix.release }}-${{ matrix.arch }}.conf"
+          echo "run=true" >> $GITHUB_OUTPUT
         else
           echo "The release ${{ matrix.release }} doesn't support ${{ matrix.arch }}, skip."
-          exit 0
+          echo "run=false" >> $GITHUB_OUTPUT
         fi
     - name: Creating Web console
+      if: ${{ steps.check.outputs.run == 'true' }}
       uses: vmactions/cf-tunnel@v0
       id: tunnel
       with:
         protocol: http
         port: 8000
     - name: Test in {{VM_NAME}}
+      if: ${{ steps.check.outputs.run == 'true' }}
       id: test
       uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
       with:
@@ -89,11 +95,13 @@ jobs:
 {{VM_RUN}}
 
     - name: Test NAT
+      if: ${{ steps.check.outputs.run == 'true' }}
       run:
         echo "TEST_ENV=$TEST_ENV"
         [ "$TEST_ENV" = "abc" ]
         ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
     - name: Test custom shell
+      if: ${{ steps.check.outputs.run == 'true' }}
       shell: {{VM_OS_NAME}} {0}
       run: |
         pwd
@@ -122,27 +130,33 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Check arch
+      id: check
       run: |
         if [ -z "${{ matrix.release }}" ]; then
           #ok, go ahead
           echo "release is empty"
+          echo "run=true" >> $GITHUB_OUTPUT
         elif [ -z "${{ matrix.arch }}" ]; then
           #ok, go ahead
           echo "arch is empty"
+          echo "run=true" >> $GITHUB_OUTPUT
         elif [ -e "conf/${{ matrix.release }}-${{ matrix.arch }}.conf" ]; then
           #ok, go ahead
           echo "conf exists: conf/${{ matrix.release }}-${{ matrix.arch }}.conf"
+          echo "run=true" >> $GITHUB_OUTPUT
         else
           echo "The release ${{ matrix.release }} doesn't support ${{ matrix.arch }}, skip."
-          exit 0
+          echo "run=false" >> $GITHUB_OUTPUT
         fi
     - name: Creating Web console
+      if: ${{ steps.check.outputs.run == 'true' }}
       uses: vmactions/cf-tunnel@v0
       id: tunnel
       with:
         protocol: http
         port: 8000
     - name: Test in {{VM_NAME}}
+      if: ${{ steps.check.outputs.run == 'true' }}
       id: test
       uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
       with:
@@ -169,11 +183,13 @@ jobs:
 {{VM_RUN}}
 
     - name: Test NAT
+      if: ${{ steps.check.outputs.run == 'true' }}
       run:
         echo "TEST_ENV=$TEST_ENV"
         [ "$TEST_ENV" = "abc" ]
         ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
     - name: Test custom shell
+      if: ${{ steps.check.outputs.run == 'true' }}
       shell: {{VM_OS_NAME}} {0}
       run: |
         pwd
@@ -201,21 +217,26 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Check arch
+      id: check
       run: |
         if [ -z "${{ matrix.release }}" ]; then
           #ok, go ahead
           echo "release is empty"
+          echo "run=true" >> $GITHUB_OUTPUT
         elif [ -z "${{ matrix.arch }}" ]; then
           #ok, go ahead
           echo "arch is empty"
+          echo "run=true" >> $GITHUB_OUTPUT
         elif [ -e "conf/${{ matrix.release }}-${{ matrix.arch }}.conf" ]; then
           #ok, go ahead
           echo "conf exists: conf/${{ matrix.release }}-${{ matrix.arch }}.conf"
+          echo "run=true" >> $GITHUB_OUTPUT
         else
           echo "The release ${{ matrix.release }} doesn't support ${{ matrix.arch }}, skip."
-          exit 0
+          echo "run=false" >> $GITHUB_OUTPUT
         fi
     - name: Test in {{VM_NAME}}
+      if: ${{ steps.check.outputs.run == 'true' }}
       id: test
       uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
       with:
@@ -235,12 +256,14 @@ jobs:
           echo "TEST_ENV=abc" >>${GITHUB_ENV}
 {{VM_RUN}}
     - name: Test NAT
+      if: ${{ steps.check.outputs.run == 'true' }}
       run:
         echo "TEST_ENV=$TEST_ENV"
         [ "$TEST_ENV" = "abc" ]
         ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
 
     - name: Test custom shell
+      if: ${{ steps.check.outputs.run == 'true' }}
       shell: {{VM_OS_NAME}} {0}
       run: |
         pwd
