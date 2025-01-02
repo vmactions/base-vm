@@ -203,7 +203,20 @@ It uses [the BaseVM 13.1](conf/default.release.conf) by default, you can use `re
 ...
 ```
 
-All the supported releases are here: BaseVM  12.3, 13.0, 13.1, test.releases [See all here](conf)
+All the supported releases are here:
+
+
+
+
+| Release | x86_64  | aarch64 |
+|---------|---------|---------|
+| 14.1    | yes   | yes   |
+| 14.2   | yes   | yes   |
+
+
+
+
+
 
 
 
