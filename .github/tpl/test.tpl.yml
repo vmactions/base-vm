@@ -29,7 +29,9 @@ jobs:
     strategy:
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
+        arch: [ "aarch64", ""]
         runs: [ "ubuntu-24.04"]
+    if: ${{ exists('conf/${{ matrix.release }}-${{ matrix.arch }}.txt') || "${{ matrix.release }}" == '' || "${{ matrix.arch }}"" == '' }}
     runs-on: ${{ matrix.runs }}
     name: sshfs {{VM_NAME}}
     env:
@@ -53,6 +55,7 @@ jobs:
         prepare: |
           {{VM_PREPARE}}
         release: ${{ matrix.release }}
+        arch: ${{ matrix.arch }}
         nat: |
           "10022": "22"
           "8080": "80"
@@ -87,7 +90,9 @@ jobs:
     strategy:
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
+        arch: [ "aarch64", ""]
         runs: [ "ubuntu-24.04"]
+    if: ${{ exists('conf/${{ matrix.release }}-${{ matrix.arch }}.txt') || "${{ matrix.release }}" == '' || "${{ matrix.arch }}"" == '' }}
     runs-on: ${{ matrix.runs }}
     name: nfs {{VM_NAME}}
     env:
@@ -111,6 +116,7 @@ jobs:
         prepare: |
           {{VM_PREPARE}}
         release: ${{ matrix.release }}
+        arch: ${{ matrix.arch }}
         nat: |
           "10022": "22"
           "8080": "80"
@@ -146,7 +152,9 @@ jobs:
     strategy:
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
+        arch: [ "aarch64", ""]
         runs: [ "ubuntu-24.04"]
+    if: ${{ exists('conf/${{ matrix.release }}-${{ matrix.arch }}.txt') || "${{ matrix.release }}" == '' || "${{ matrix.arch }}"" == '' }}
     runs-on: ${{ matrix.runs }}
     name: {{VM_NAME}}
     env:
@@ -164,6 +172,7 @@ jobs:
           {{VM_PREPARE}}
         mem: 4096
         release: ${{ matrix.release }}
+        arch: ${{ matrix.arch }}
         nat: |
           "10022": "22"
           "8080": "80"
