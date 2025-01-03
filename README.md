@@ -5,6 +5,21 @@ Use this action to run your CI in BaseVM.
 The github workflow only supports Ubuntu, Windows and MacOS. But what if you need to use BaseVM?
 
 
+All the supported releases are here:
+
+
+
+
+| Release | x86_64  | aarch64 |
+|---------|---------|---------|
+| 14.1    | yes   | yes   |
+| 14.2   | yes   | yes   |
+
+
+
+
+
+
 
 
 ## 1. Example: `test.yml`:
@@ -220,21 +235,6 @@ The vm is using x86_64(AMD64) by default, but you can use `arch` option to chang
         arch: aarch64
 ...
 ```
-
-
-All the supported releases are here:
-
-
-
-
-| Release | x86_64  | aarch64 |
-|---------|---------|---------|
-| 14.1    | yes   | yes   |
-| 14.2   | yes   | yes   |
-
-
-
-
 
 
 
