@@ -32,6 +32,9 @@ jobs:
         release: [ {{TEST_RELEASES}}, ""]
         arch: [ "aarch64", ""]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
+        exclude:
+          - runs: "ubuntu-24.04-arm"
+            arch: ""
 
     runs-on: ${{ matrix.runs }}
     name: sshfs {{VM_NAME}}
@@ -130,6 +133,10 @@ jobs:
         release: [ {{TEST_RELEASES}}, ""]
         arch: [ "aarch64", ""]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
+        exclude:
+          - runs: "ubuntu-24.04-arm"
+            arch: ""
+
     runs-on: ${{ matrix.runs }}
     name: nfs {{VM_NAME}}
     env:
@@ -227,6 +234,10 @@ jobs:
         release: [ {{TEST_RELEASES}}, ""]
         arch: [ "aarch64", ""]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
+        exclude:
+          - runs: "ubuntu-24.04-arm"
+            arch: ""
+
     runs-on: ${{ matrix.runs }}
     name: {{VM_NAME}}
     env:
