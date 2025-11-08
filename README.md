@@ -87,7 +87,7 @@ The default shell in BaseVM is `csh`, if you want to use `sh` to execute the `ru
 
 ## 2. Share code
 
-The code is shared from the host to the VM via `rsync` by default, you can choose to use `sshfs` or `nfs` to share code instead.
+The code is shared from the host to the VM via `rsync` by default, you can choose to use `sshfs` or `nfs` or `scp` to share code instead.
 
 
 ```
@@ -116,7 +116,7 @@ The code is shared from the host to the VM via `rsync` by default, you can choos
 You can also set `sync: no`, so the files will not be synced to the  VM.
 
 
-When using `rsync`,  you can define `copyback: false` to not copy files back from the VM in to the host.
+When using `rsync` or `scp`,  you can define `copyback: false` to not copy files back from the VM in to the host.
 
 
 ```
