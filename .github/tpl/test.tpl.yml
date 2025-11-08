@@ -243,7 +243,7 @@ jobs:
             arch: "riscv64"
 
     runs-on: ${{ matrix.runs }}
-    name: nfs {{VM_NAME}}
+    name: scp {{VM_NAME}}
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
