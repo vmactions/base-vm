@@ -361,7 +361,7 @@ jobs:
 
 
     runs-on: ${{ matrix.runs }}
-    name: {{VM_NAME}}
+    name: rsync default {{VM_NAME}}
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
