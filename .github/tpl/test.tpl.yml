@@ -37,6 +37,7 @@ jobs:
             arch: ""
           - runs: "ubuntu-24.04-arm"
             arch: "riscv64"
+{{VM_TEST_EXCLUDE}}
 
     runs-on: ${{ matrix.runs }}
     name: sshfs {{VM_NAME}}
@@ -145,6 +146,7 @@ jobs:
             arch: ""
           - runs: "ubuntu-24.04-arm"
             arch: "riscv64"
+{{VM_TEST_EXCLUDE}}
 
     runs-on: ${{ matrix.runs }}
     name: nfs {{VM_NAME}}
@@ -251,6 +253,7 @@ jobs:
             arch: ""
           - runs: "ubuntu-24.04-arm"
             arch: "riscv64"
+{{VM_TEST_EXCLUDE}}
 
     runs-on: ${{ matrix.runs }}
     name: scp {{VM_NAME}}
@@ -354,6 +357,8 @@ jobs:
             arch: ""
           - runs: "ubuntu-24.04-arm"
             arch: "riscv64"
+{{VM_TEST_EXCLUDE}}
+
 
     runs-on: ${{ matrix.runs }}
     name: {{VM_NAME}}
