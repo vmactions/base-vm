@@ -145,7 +145,7 @@ importVM() {
 
   if [ ! -e "$qow2" ]; then
     echo "Downloading $OVA_LINK"
-    axel --follow-redirects -n 8 -o "$ovafile" -q "$OVA_LINK"
+    axel --max-redirect=8 -n 8 -o "$ovafile" -q "$OVA_LINK"
     
     for i in $(seq 1 9) ; do
       _url="${OVA_LINK}.$i"
@@ -154,7 +154,7 @@ importVM() {
         echo "break"
         break
       fi
-      axel --follow-redirects -n 8 -o "${ovafile}.$i" -q "$_url"
+      axel --max-redirect=8 -n 8 -o "${ovafile}.$i" -q "$_url"
       ls -lah
       cat "${ovafile}.$i" >>"$ovafile"
       rm -f "${ovafile}.$i"
