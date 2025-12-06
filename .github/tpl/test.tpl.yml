@@ -324,6 +324,7 @@ jobs:
           fi
           env
           echo "TEST_ENV=abc" >>${GITHUB_ENV}
+          echo "textfromvm" >$GITHUB_WORKSPACE/vm.txt
 {{VM_RUN}}
 
     - name: Test NAT
@@ -331,15 +332,12 @@ jobs:
       run:
         echo "TEST_ENV=$TEST_ENV"
         [ "$TEST_ENV" = "abc" ]
-        ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
-    - name: Test custom shell
-      if: ${{ steps.check.outputs.run == 'true' }}
-      shell: {{VM_OS_NAME}} {0}
-      run: |
-        pwd
-        cd $GITHUB_WORKSPACE;
-        pwd
-{{VM_RUN}}
+        [ -e "$GITHUB_WORKSPACE/vm.txt" ]
+        cat "$$GITHUB_WORKSPACE/vm.txt"
+        grep "textfromvm" $GITHUB_WORKSPACE/vm.txt
+        
+
+
 
 
 
