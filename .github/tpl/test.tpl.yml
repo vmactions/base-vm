@@ -116,7 +116,8 @@ jobs:
 
     - name: Test NAT
       if: ${{ steps.check.outputs.run == 'true' }}
-      run:
+      run: |
+        set -e
         echo "TEST_ENV=$TEST_ENV"
         [ "$TEST_ENV" = "abc" ]
         ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
@@ -225,7 +226,8 @@ jobs:
 
     - name: Test NAT
       if: ${{ steps.check.outputs.run == 'true' }}
-      run:
+      run: |
+        set -e
         echo "TEST_ENV=$TEST_ENV"
         [ "$TEST_ENV" = "abc" ]
         ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
@@ -329,7 +331,7 @@ jobs:
 
     - name: Test files
       if: ${{ steps.check.outputs.run == 'true' }}
-      run:
+      run: |
         set -e
         echo "TEST_ENV=$TEST_ENV";
         [ "$TEST_ENV" = "abc" ];
@@ -421,7 +423,8 @@ jobs:
 {{VM_RUN}}
     - name: Test NAT
       if: ${{ steps.check.outputs.run == 'true' }}
-      run:
+      run: |
+        set -e
         echo "TEST_ENV=$TEST_ENV"
         [ "$TEST_ENV" = "abc" ]
         ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
