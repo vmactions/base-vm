@@ -327,7 +327,7 @@ jobs:
           echo "textfromvm" >$GITHUB_WORKSPACE/vm.txt
 {{VM_RUN}}
 
-    - name: Test NAT
+    - name: Test files
       if: ${{ steps.check.outputs.run == 'true' }}
       run:
         echo "TEST_ENV=$TEST_ENV"
