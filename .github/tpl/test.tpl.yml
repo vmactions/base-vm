@@ -222,6 +222,7 @@ jobs:
           fi
           env
           echo "TEST_ENV=abc" >>${GITHUB_ENV}
+          echo "textfromvm" >$GITHUB_WORKSPACE/vm.txt
 {{VM_RUN}}
 
     - name: Test NAT
