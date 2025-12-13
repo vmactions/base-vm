@@ -285,9 +285,6 @@ async function main() {
             await execSSH(`sshfs -o reconnect,ServerAliveCountMax=2,allow_other,default_permissions host:${workspace} $HOME/work`, { host: sshHost });
           } else if (sync === 'nfs') {
             core.info("Setting up NFS");
-            // Host side setup
-            await exec.exec("sudo", ["apt-get", "update"], { silent: true });
-            await exec.exec("sudo", ["apt-get", "install", "-y", "nfs-kernel-server"], { silent: true });
             // Add export
             const exports = `${workspace} *(rw,insecure,async,no_subtree_check,anonuid=${os.userInfo().uid},anongid=${os.userInfo().gid})`;
             await exec.exec("bash", ["-c", `echo "${exports}" | sudo tee -a /etc/exports`]);
