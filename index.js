@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const https = require('https');
+const { spawn } = require('child_process');
 
 const workingDir = __dirname;
 
@@ -358,7 +359,31 @@ async function main() {
         core.info("Copying back artifacts");
         const work = path.join(process.env["HOME"], "work");
         if (sync === 'scp') {
-          await exec.exec("scp", ["-r", "-O", `${sshHost}:${work}/*`, work + "/"]);
+          const remoteTarCmd = `tar -cf - -C "${work}" --exclude .git .`;
+          core.info(`Exec SSH: ${remoteTarCmd}`);
+
+          await new Promise((resolve, reject) => {
+            const sshProc = spawn("ssh", ["-o", "StrictHostKeyChecking=no", sshHost, remoteTarCmd]);
+            const tarProc = spawn("tar", ["-xf", "-"], { cwd: work });
+
+            sshProc.stdout.pipe(tarProc.stdin);
+
+            // Handle parsing loop of stderr if needed, or just pipe to process.stderr
+            sshProc.stderr.on('data', (data) => core.info(`[SSH STDERR] ${data}`));
+            tarProc.stderr.on('data', (data) => core.info(`[TAR STDERR] ${data}`));
+
+            sshProc.on('close', (code) => {
+              if (code !== 0) reject(new Error(`SSH exited with code ${code}`));
+            });
+
+            tarProc.on('close', (code) => {
+              if (code !== 0) reject(new Error(`Tar exited with code ${code}`));
+              else resolve();
+            });
+
+            sshProc.on('error', reject);
+            tarProc.on('error', reject);
+          });
         } else {
           await exec.exec("rsync", ["-vrtopg", `${sshHost}:${work}/`, work + "/"]);
         }
