@@ -307,14 +307,22 @@ async function main() {
     core.endGroup();
 
     // SSH Env Config
+    const sshDir = path.join(process.env["HOME"], ".ssh");
+    if (!fs.existsSync(sshDir)) {
+      fs.mkdirSync(sshDir, { recursive: true });
+    }
+    const sshConfigPath = path.join(sshDir, "config");
+
+    let sendEnvs = [];
     if (envs) {
-      const sshDir = path.join(process.env["HOME"], ".ssh");
-      if (!fs.existsSync(sshDir)) {
-        fs.mkdirSync(sshDir, { recursive: true });
-      }
-      const sshConfigPath = path.join(sshDir, "config");
-      // Append cleanly
-      fs.appendFileSync(sshConfigPath, `Host ${sshHost}\n  SendEnv ${envs}\n`);
+      sendEnvs.push(envs);
+    }
+    // Add GITHUB_* wildcard
+    sendEnvs.push("GITHUB_*");
+    sendEnvs.push("CI");
+
+    if (sendEnvs.length > 0) {
+      fs.appendFileSync(sshConfigPath, `Host ${sshHost}\n  SendEnv ${sendEnvs.join(" ")}\n`);
     }
 
     if (isScpOrRsync) {
