@@ -97,7 +97,7 @@ jobs:
         release: ${{ matrix.release }}
         arch: ${{ matrix.arch }}
         nat: |
-          "10022": "22"
+          "20022": "22"
           "8080": "80"
           "8443": "443"
           udp:"8081": "80"
@@ -120,7 +120,7 @@ jobs:
         set -e
         echo "TEST_ENV=$TEST_ENV"
         [ "$TEST_ENV" = "abc" ]
-        ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
+        ssh -vvv -p 20022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
     - name: Test custom shell
       if: ${{ steps.check.outputs.run == 'true' }}
       shell: {{VM_OS_NAME}} {0}
@@ -207,7 +207,7 @@ jobs:
         release: ${{ matrix.release }}
         arch: ${{ matrix.arch }}
         nat: |
-          "10022": "22"
+          "20022": "22"
           "8080": "80"
           "8443": "443"
           udp:"8081": "80"
@@ -234,7 +234,7 @@ jobs:
         grep "textfromvm" $GITHUB_WORKSPACE/vm.txt;
         echo "TEST_ENV=$TEST_ENV"
         [ "$TEST_ENV" = "abc" ]
-        ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
+        ssh -vvv -p 20022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
     - name: Test custom shell
       if: ${{ steps.check.outputs.run == 'true' }}
       shell: {{VM_OS_NAME}} {0}
@@ -314,7 +314,7 @@ jobs:
         release: ${{ matrix.release }}
         arch: ${{ matrix.arch }}
         nat: |
-          "10022": "22"
+          "20022": "22"
           "8080": "80"
           "8443": "443"
           udp:"8081": "80"
@@ -417,7 +417,7 @@ jobs:
         release: ${{ matrix.release }}
         arch: ${{ matrix.arch }}
         nat: |
-          "10022": "22"
+          "20022": "22"
           "8080": "80"
           "8443": "443"
           udp:"8081": "80"
@@ -432,7 +432,7 @@ jobs:
         set -e
         echo "TEST_ENV=$TEST_ENV"
         [ "$TEST_ENV" = "abc" ]
-        ssh -vvv -p 10022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
+        ssh -vvv -p 20022 -i $HOME/.ssh/host.id_rsa root@localhost "uname -a;whoami;pwd"
 
     - name: Test custom shell
       if: ${{ steps.check.outputs.run == 'true' }}
