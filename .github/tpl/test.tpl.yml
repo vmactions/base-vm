@@ -94,6 +94,7 @@ jobs:
         envs: 'DEBUG MYTOKEN MYTOKEN2'
         prepare: |
           {{VM_PREPARE}}
+        mem: 4096
         release: ${{ matrix.release }}
         arch: ${{ matrix.arch }}
         nat: |
@@ -205,6 +206,7 @@ jobs:
         envs: 'DEBUG MYTOKEN MYTOKEN2'
         prepare: |
           {{VM_PREPARE}}
+        mem: 4096
         release: ${{ matrix.release }}
         arch: ${{ matrix.arch }}
         nat: |
@@ -312,6 +314,7 @@ jobs:
         envs: 'DEBUG MYTOKEN MYTOKEN2'
         prepare: |
           {{VM_PREPARE}}
+        mem: 4096
         release: ${{ matrix.release }}
         arch: ${{ matrix.arch }}
         nat: |
