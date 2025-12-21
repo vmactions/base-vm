@@ -37,8 +37,7 @@ jobs:
             arch: ""
           - runs: "ubuntu-24.04-arm"
             arch: "riscv64"
-{{VM_TEST_EXCLUDE}}
-{{VM_TEST_EXCLUDE_SSHFS}}
+{{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_SSHFS}}
 
     runs-on: ${{ matrix.runs }}
     name: sshfs {{VM_NAME}}
