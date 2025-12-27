@@ -519,7 +519,7 @@ async function main() {
             tarProc.on('error', reject);
           });
         } else {
-          await exec.exec("rsync", ["-av", "--exclude", ".git", "--exclude", "node_modules", "--exclude", "target", "-e", "ssh", `${sshHost}:${vmWork}/`, `${work}/`]);
+          await exec.exec("rsync", ["-av", "--exclude", ".git", "-e", "ssh", `${sshHost}:${vmWork}/`, `${work}/`]);
         }
       }
     }
