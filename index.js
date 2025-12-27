@@ -140,7 +140,7 @@ async function install() {
   core.info("Installing dependencies...");
   if (process.platform === 'linux') {
     await exec.exec("sudo", ["apt-get", "update"]);
-    await exec.exec("sudo", ["apt-get", "install", "-y"
+    await exec.exec("sudo", ["apt-get", "install", "-y", "--no-install-recommends"
       , "qemu-system-x86"
       , "qemu-system-arm"
       , "qemu-efi-aarch64"
