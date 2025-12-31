@@ -373,6 +373,8 @@ async function main() {
     let sshHost = osName;
     args.push("--ssh-name", sshHost);
 
+    args.push("--snapshot");
+
     core.startGroup("Starting VM with anyvm.org");
     let output = "";
     const options = {
