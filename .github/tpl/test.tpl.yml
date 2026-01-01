@@ -99,6 +99,11 @@ jobs:
         mem: 4096
         release: ${{ matrix.release }}
         arch: ${{ matrix.arch }}
+        nat: |
+          "20022": "22"
+          "8080": "80"
+          "8443": "443"
+          udp:"8081": "80"
         usesh: true
         debug: true
         sync: sshfs
@@ -112,6 +117,24 @@ jobs:
           echo "TEST_ENV=abc" >>${GITHUB_ENV}
           echo "textfromvm" >$GITHUB_WORKSPACE/vm.txt
 {{VM_RUN}}
+
+    - name: Test NAT
+      if: ${{ steps.check.outputs.run == 'true' }}
+      env:
+        VM_USER: "{{VM_USER}}"
+      run: |
+        set -e
+        echo "TEST_ENV=$TEST_ENV"
+        [ "$TEST_ENV" = "abc" ]
+        ssh -v -p 20022 ${VM_USER:-root}@localhost  "uname -a;whoami;pwd"
+    - name: Test custom shell
+      if: ${{ steps.check.outputs.run == 'true' }}
+      shell: {{VM_OS_NAME}} {0}
+      run: |
+        pwd
+{{VM_RUN}}
+
+
 
 
 
@@ -189,6 +212,11 @@ jobs:
         mem: 4096
         release: ${{ matrix.release }}
         arch: ${{ matrix.arch }}
+        nat: |
+          "20022": "22"
+          "8080": "80"
+          "8443": "443"
+          udp:"8081": "80"
         usesh: true
         debug: true
         sync: nfs
@@ -204,7 +232,24 @@ jobs:
           echo "textfromvm" >$GITHUB_WORKSPACE/vm.txt
 {{VM_RUN}}
 
-
+    - name: Test NAT
+      if: ${{ steps.check.outputs.run == 'true' }}
+      env:
+        VM_USER: "{{VM_USER}}"
+      run: |
+        set -e
+        [ -e "$GITHUB_WORKSPACE/vm.txt" ];
+        cat "$GITHUB_WORKSPACE/vm.txt";
+        grep "textfromvm" $GITHUB_WORKSPACE/vm.txt;
+        echo "TEST_ENV=$TEST_ENV"
+        [ "$TEST_ENV" = "abc" ]
+        ssh -v -p 20022 ${VM_USER:-root}@localhost "uname -a;whoami;pwd"
+    - name: Test custom shell
+      if: ${{ steps.check.outputs.run == 'true' }}
+      shell: {{VM_OS_NAME}} {0}
+      run: |
+        pwd
+{{VM_RUN}}
 
 
 
@@ -277,6 +322,11 @@ jobs:
         mem: 4096
         release: ${{ matrix.release }}
         arch: ${{ matrix.arch }}
+        nat: |
+          "20022": "22"
+          "8080": "80"
+          "8443": "443"
+          udp:"8081": "80"
         usesh: true
         debug: true
         sync: scp
@@ -295,6 +345,8 @@ jobs:
 
     - name: Test files
       if: ${{ steps.check.outputs.run == 'true' }}
+      env:
+        VM_USER: "{{VM_USER}}"
       run: |
         set -e
         [ -e "$GITHUB_WORKSPACE/vm.txt" ];
