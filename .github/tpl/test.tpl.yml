@@ -130,8 +130,6 @@ jobs:
       shell: {{VM_OS_NAME}} {0}
       run: |
         pwd
-        cd $GITHUB_WORKSPACE;
-        pwd
 {{VM_RUN}}
 
 
@@ -246,8 +244,6 @@ jobs:
       if: ${{ steps.check.outputs.run == 'true' }}
       shell: {{VM_OS_NAME}} {0}
       run: |
-        pwd
-        cd $GITHUB_WORKSPACE;
         pwd
 {{VM_RUN}}
 
@@ -450,8 +446,6 @@ jobs:
       if: ${{ steps.check.outputs.run == 'true' }}
       shell: {{VM_OS_NAME}} {0}
       run: |
-        pwd
-        cd $GITHUB_WORKSPACE;
         pwd
 {{VM_RUN}}
 
