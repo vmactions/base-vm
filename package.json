@@ -21,6 +21,6 @@
   "dependencies": {
     "@actions/core": "^3.0.0",
     "@actions/exec": "^3.0.0",
-    "@actions/cache": "^5.0.0"
+    "@actions/cache": "^6.0.0"
   }
 }
