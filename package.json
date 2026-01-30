@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/{{GITHUB_REPOSITORY}}",
   "dependencies": {
-    "@actions/core": "^2.0.1",
+    "@actions/core": "^3.0.0",
     "@actions/exec": "^3.0.0",
     "@actions/cache": "^5.0.0"
   }
