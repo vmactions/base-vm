@@ -171,18 +171,7 @@ async function handleErrorWithDebug(sshHost, vncLink) {
     sshHost
   ];
 
-  core.info("Waiting for SSH to be ready...");
-  let connected = false;
-  while (!connected) {
-    try {
-      await exec.exec("ssh", [...args, "exit 0"], { silent: true });
-      connected = true;
-    } catch (e) {
-      await new Promise(r => setTimeout(r, 5000));
-    }
-  }
-
-  core.info("SSH is ready. Monitoring ~/continue file in the VM...");
+  core.info("Monitoring ~/continue file in the VM...");
   const continueFile = "~/continue";
   let finished = false;
   while (!finished) {
@@ -196,8 +185,7 @@ async function handleErrorWithDebug(sshHost, vncLink) {
         await new Promise(r => setTimeout(r, 5000));
       }
     } catch (e) {
-      core.info("SSH connection lost or error occurred. Ending debug session.");
-      finished = true;
+      throw new Error("The VM has exited, so the debugging process is terminating.");
     }
   }
 }
