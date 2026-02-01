@@ -157,6 +157,47 @@ async function execSSH(cmd, sshConfig, ignoreReturn = false, silent = false) {
   }
 }
 
+async function handleErrorWithDebug(sshHost) {
+  core.warning("Please open the remote vnc link for debugging. To finish debugging, you can run `touch ~/continue` in the VM. In the VM, you can use `ssh host` to access the host.");
+
+  const args = [
+    "-o", "StrictHostKeyChecking=no",
+    "-o", "UserKnownHostsFile=/dev/null",
+    "-o", "ConnectTimeout=10",
+    sshHost
+  ];
+
+  core.info("Waiting for SSH to be ready...");
+  let connected = false;
+  while (!connected) {
+    try {
+      await exec.exec("ssh", [...args, "exit 0"], { silent: true });
+      connected = true;
+    } catch (e) {
+      await new Promise(r => setTimeout(r, 5000));
+    }
+  }
+
+  core.info("SSH is ready. Monitoring ~/continue file in the VM...");
+  const continueFile = "~/continue";
+  let finished = false;
+  while (!finished) {
+    try {
+      const exitCode = await exec.exec("ssh", [...args, `test -f ${continueFile}`], { silent: true, ignoreReturnCode: true });
+      if (exitCode === 0) {
+        core.info(`${continueFile} found. Cleaning up and continuing...`);
+        await exec.exec("ssh", [...args, `rm -f ${continueFile}`], { silent: true });
+        finished = true;
+      } else {
+        await new Promise(r => setTimeout(r, 5000));
+      }
+    } catch (e) {
+      core.info("SSH connection lost or error occurred. Ending debug session.");
+      finished = true;
+    }
+  }
+}
+
 async function install(arch, sync, builderVersion, debug, disableCache) {
   const start = Date.now();
   core.info("Installing dependencies...");
@@ -308,6 +349,7 @@ async function main() {
     const copyback = core.getInput("copyback").toLowerCase();
     const syncTime = core.getInput("sync-time").toLowerCase();
     const disableCache = core.getInput("disable-cache").toLowerCase() === 'true';
+    const debugOnError = core.getInput("debug-on-error").toLowerCase() === 'true';
 
     const work = path.join(process.env["HOME"], "work");
     let vmwork = path.join(process.env["HOME"], "work");
@@ -497,7 +539,13 @@ async function main() {
     if (osName === 'haiku') {
       args.push("--vga", "std");
     }
-    args.push("--vnc", "off");
+
+    if (debugOnError) {
+      args.push("--remote-vnc");
+      args.push("--accept-vm-ssh");
+    } else {
+      args.push("--vnc", "off");
+    }
 
     core.startGroup("Starting VM with anyvm.org");
     let output = "";
@@ -621,19 +669,35 @@ async function main() {
       await execSSH(`ln -s ${vmwork} $HOME/work`, { ...sshConfig });
       core.endGroup();
     }
-    core.startGroup("Run 'prepare' in VM");
-    if (prepare) {
-      const prepareCmd = (sync !== 'no') ? `cd "$GITHUB_WORKSPACE"\n${prepare}` : prepare;
-      await execSSH(prepareCmd, { ...sshConfig });
+    try {
+      core.startGroup("Run 'prepare' in VM");
+      if (prepare) {
+        const prepareCmd = (sync !== 'no') ? `cd "$GITHUB_WORKSPACE"\n${prepare}` : prepare;
+        await execSSH(prepareCmd, { ...sshConfig });
+      }
+      core.endGroup();
+    } catch (err) {
+      core.endGroup();
+      if (debugOnError) {
+        await handleErrorWithDebug(sshHost);
+      }
+      throw err;
     }
-    core.endGroup();
 
-    core.startGroup("Run 'run' in VM");
-    if (run) {
-      const runCmd = (sync !== 'no') ? `cd "$GITHUB_WORKSPACE"\n${run}` : run;
-      await execSSH(runCmd, { ...sshConfig });
+    try {
+      core.startGroup("Run 'run' in VM");
+      if (run) {
+        const runCmd = (sync !== 'no') ? `cd "$GITHUB_WORKSPACE"\n${run}` : run;
+        await execSSH(runCmd, { ...sshConfig });
+      }
+      core.endGroup();
+    } catch (err) {
+      core.endGroup();
+      if (debugOnError) {
+        await handleErrorWithDebug(sshHost);
+      }
+      throw err;
     }
-    core.endGroup();
 
     // 7. Copyback
     if (copyback !== 'false' && sync !== 'no' && sync !== 'sshfs' && sync !== 'nfs') {
