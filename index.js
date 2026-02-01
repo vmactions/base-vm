@@ -167,7 +167,7 @@ async function handleErrorWithDebug(sshHost, vncLink) {
   const args = [
     "-o", "StrictHostKeyChecking=no",
     "-o", "UserKnownHostsFile=/dev/null",
-    "-o", "ConnectTimeout=10",
+    "-o", "ConnectTimeout=3",
     sshHost
   ];
 
@@ -175,8 +175,14 @@ async function handleErrorWithDebug(sshHost, vncLink) {
   const continueFile = "~/continue";
   let finished = false;
   while (!finished) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
     try {
-      const exitCode = await exec.exec("ssh", [...args, `test -f ${continueFile}`], { silent: true, ignoreReturnCode: true });
+      const exitCode = await exec.exec("ssh", [...args, `test -f ${continueFile}`], {
+        silent: true,
+        ignoreReturnCode: true,
+        signal: controller.signal
+      });
       if (exitCode === 0) {
         core.info(`${continueFile} found. Cleaning up and continuing...`);
         await exec.exec("ssh", [...args, `rm -f ${continueFile}`], { silent: true });
@@ -186,6 +192,8 @@ async function handleErrorWithDebug(sshHost, vncLink) {
       }
     } catch (e) {
       throw new Error("The VM has exited, so the debugging process is terminating.");
+    } finally {
+      clearTimeout(timer);
     }
   }
 }
