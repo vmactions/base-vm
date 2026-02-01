@@ -681,7 +681,6 @@ async function main() {
       if (debugOnError) {
         await handleErrorWithDebug(sshHost);
       }
-      throw err;
     }
 
     try {
@@ -696,7 +695,6 @@ async function main() {
       if (debugOnError) {
         await handleErrorWithDebug(sshHost);
       }
-      throw err;
     }
 
     // 7. Copyback
