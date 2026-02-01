@@ -159,7 +159,7 @@ async function execSSH(cmd, sshConfig, ignoreReturn = false, silent = false) {
 
 async function handleErrorWithDebug(sshHost, vncLink) {
   const message = vncLink
-    ? `Please open the remote vnc link for debugging: ${vncLink}. To finish debugging, you can run \`touch ~/continue\` in the VM. In the VM, you can use \`ssh host\` to access the host.`
+    ? `Please open the remote vnc link for debugging: ${vncLink} . To finish debugging, you can run \`touch ~/continue\` in the VM. In the VM, you can use \`ssh host\` to access the host.`
     : "Please open the remote vnc link for debugging. To finish debugging, you can run `touch ~/continue` in the VM. In the VM, you can use `ssh host` to access the host.";
 
   core.warning(message);
