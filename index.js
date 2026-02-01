@@ -157,8 +157,12 @@ async function execSSH(cmd, sshConfig, ignoreReturn = false, silent = false) {
   }
 }
 
-async function handleErrorWithDebug(sshHost) {
-  core.warning("Please open the remote vnc link for debugging. To finish debugging, you can run `touch ~/continue` in the VM. In the VM, you can use `ssh host` to access the host.");
+async function handleErrorWithDebug(sshHost, vncLink) {
+  const message = vncLink
+    ? `Please open the remote vnc link for debugging: ${vncLink}. To finish debugging, you can run \`touch ~/continue\` in the VM. In the VM, you can use \`ssh host\` to access the host.`
+    : "Please open the remote vnc link for debugging. To finish debugging, you can run `touch ~/continue` in the VM. In the VM, you can use `ssh host` to access the host.";
+
+  core.warning(message);
 
   const args = [
     "-o", "StrictHostKeyChecking=no",
@@ -422,6 +426,7 @@ async function main() {
     // Support configurable data dir; cache dir is what anyvm uses to store artifacts
     const dataDirInput = core.getInput("data-dir") || '';
     const datadir = dataDirInput ? expandVars(dataDirInput, process.env) : path.join(__dirname, 'output');
+    const remoteVncLinkFile = path.join(datadir, "remotevnc.link");
     if (!fs.existsSync(datadir)) {
       fs.mkdirSync(datadir, { recursive: true });
     }
@@ -543,6 +548,8 @@ async function main() {
     if (debugOnError) {
       args.push("--remote-vnc");
       args.push("--accept-vm-ssh");
+      args.push("--remote-vnc-link-file", remoteVncLinkFile);
+
     } else {
       args.push("--vnc", "off");
     }
@@ -679,7 +686,11 @@ async function main() {
     } catch (err) {
       core.endGroup();
       if (debugOnError) {
-        await handleErrorWithDebug(sshHost);
+        let vncLink = "";
+        if (fs.existsSync(remoteVncLinkFile)) {
+          vncLink = fs.readFileSync(remoteVncLinkFile, 'utf8').split('\n')[0].trim();
+        }
+        await handleErrorWithDebug(sshHost, vncLink);
       }
     }
 
@@ -693,7 +704,11 @@ async function main() {
     } catch (err) {
       core.endGroup();
       if (debugOnError) {
-        await handleErrorWithDebug(sshHost);
+        let vncLink = "";
+        if (fs.existsSync(remoteVncLinkFile)) {
+          vncLink = fs.readFileSync(remoteVncLinkFile, 'utf8').split('\n')[0].trim();
+        }
+        await handleErrorWithDebug(sshHost, vncLink);
       }
     }
 
