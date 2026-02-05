@@ -468,7 +468,7 @@ jobs:
     strategy:
       fail-fast: false
     runs-on: ubuntu-24.04
-    name: test default {{VM_NAME}}
+    name: test default error {{VM_NAME}}
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
