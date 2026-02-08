@@ -40,10 +40,10 @@ jobs:
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Test in BaseVM
       id: test
-      uses: vmactions/base-vm@
+      uses: vmactions/base-vm@message:Not Foundv0
       with:
         envs: 'MYTOKEN MYTOKEN2'
         usesh: true
@@ -63,7 +63,7 @@ jobs:
 ```
 
 
-The latest major version is: ``, which is the most recommended to use. (You can also use the latest full version: ``)  
+The latest major version is: `message:Not Foundv0`, which is the most recommended to use. (You can also use the latest full version: `{message:Not Found,documentation_url:https://docs.github.com/rest/releases/releases#get-the-latest-release,status:404}v0.0.0`)  
 
 
 If you are migrating from the previous `v0`, please change the `runs-on: ` to `runs-on: ubuntu-latest`
@@ -92,15 +92,15 @@ The default shell in BaseVM is `csh`, if you want to use `sh` to execute the `ru
 The code is shared from the host to the VM via `rsync` by default, you can choose to use `sshfs` or `nfs` or `scp` to share code instead.
 
 
-```
+```yaml
 
 ...
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Test
       id: test
-      uses: vmactions/base-vm@
+      uses: vmactions/base-vm@message:Not Foundv0
       with:
         envs: 'MYTOKEN MYTOKEN2'
         usesh: true
@@ -121,15 +121,15 @@ You can also set `sync: no`, so the files will not be synced to the  VM.
 When using `rsync` or `scp`,  you can define `copyback: false` to not copy files back from the VM in to the host.
 
 
-```
+```yaml
 
 ...
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Test
       id: test
-      uses: vmactions/base-vm@
+      uses: vmactions/base-vm@message:Not Foundv0
       with:
         envs: 'MYTOKEN MYTOKEN2'
         usesh: true
@@ -153,13 +153,13 @@ When using `rsync` or `scp`,  you can define `copyback: false` to not copy files
 
 You can add NAT port between the host and the VM.
 
-```
+```yaml
 ...
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Test
       id: test
-      uses: vmactions/base-vm@
+      uses: vmactions/base-vm@message:Not Foundv0
       with:
         envs: 'MYTOKEN MYTOKEN2'
         usesh: true
@@ -175,13 +175,14 @@ You can add NAT port between the host and the VM.
 
 The default memory of the VM is 6144MB, you can use `mem` option to set the memory size:
 
-```
+```yaml
+
 ...
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Test
       id: test
-      uses: vmactions/base-vm@
+      uses: vmactions/base-vm@message:Not Foundv0
       with:
         envs: 'MYTOKEN MYTOKEN2'
         usesh: true
@@ -192,13 +193,14 @@ The default memory of the VM is 6144MB, you can use `mem` option to set the memo
 
 The VM is using all the cpu cores of the host by default, you can use `cpu` option to change the cpu cores:
 
-```
+```yaml
+
 ...
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Test
       id: test
-      uses: vmactions/base-vm@
+      uses: vmactions/base-vm@message:Not Foundv0
       with:
         envs: 'MYTOKEN MYTOKEN2'
         usesh: true
@@ -211,13 +213,13 @@ The VM is using all the cpu cores of the host by default, you can use `cpu` opti
 
 It uses [the BaseVM 13.1](conf/default.release.conf) by default, you can use `release` option to use another version of BaseVM:
 
-```
+```yaml
 ...
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Test
       id: test
-      uses: vmactions/base-vm@
+      uses: vmactions/base-vm@message:Not Foundv0
       with:
         release: "13.2"
 ...
@@ -228,7 +230,7 @@ It uses [the BaseVM 13.1](conf/default.release.conf) by default, you can use `re
 
 The vm is using x86_64(AMD64) by default, but you can use `arch` option to change the architecture:
 
-```
+```yaml
 ...
     runs-on: ubuntu-latest
     name: A job to run test in BaseVM
@@ -236,10 +238,10 @@ The vm is using x86_64(AMD64) by default, but you can use `arch` option to chang
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Test
       id: test
-      uses: vmactions/base-vm@
+      uses: vmactions/base-vm@message:Not Foundv0
       with:
         release: "13.2"
         arch: aarch64
@@ -256,13 +258,13 @@ It's not recommended to use `ubuntu-24.04-arm` as runner, it's much more slower.
 
 Support custom shell:
 
-```
+```yaml
 ...
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Start VM
       id: vm
-      uses: vmactions/base-vm@
+      uses: vmactions/base-vm@message:Not Foundv0
       with:
         sync: nfs
     - name: Custom shell step 1
@@ -285,29 +287,75 @@ Support custom shell:
 
 If the time in VM is not correct, You can use `sync-time` option to synchronize the VM time with NTP:
 
-```
+```yaml
 ...
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Test
       id: test
-      uses: vmactions/base-vm@
+      uses: vmactions/base-vm@message:Not Foundv0
       with:
         sync-time: true
 ...
 ```
 
 
+## 9. Disable cache
 
+By default, the action caches `apt` packages on the host and VM images/artifacts. You can use the `disableCache` option to disable this:
 
-
-## 9. Debug locally
-
-You can use [AnyVM](https://github.com/anyvm-org/anyvm) to run the BaseVM VM locally for debugging. It's the same environment as in the GitHub Actions.
-
-```bash
-python3 anyvm.py --os 
+```yml
+...
+    steps:
+    - uses: actions/checkout@v6
+    - name: Test
+      id: test
+      uses: vmactions/base-vm@message:Not Foundv0
+      with:
+        disable-cache: true
+...
 ```
+
+
+## 10. Debug on error
+
+If you want to debug the VM when the `prepare` or `run` step fails, you can set `debug-on-error: true`.
+
+When a failure occurs, the action will enable a remote VNC link and wait for your interaction. You can then access the VM via VNC to debug. To continue or finish the action, you can run `touch ~/continue` inside the VM.
+
+```yaml
+...
+    steps:
+    - uses: actions/checkout@v6
+    - name: Test
+      id: test
+      uses: vmactions/base-vm@message:Not Foundv0
+      with:
+        debug-on-error: true
+
+...
+```
+
+You can also set the `vnc-password` parameter to set a custom password to protect the VNC link:
+
+```yaml
+...
+    steps:
+    - uses: actions/checkout@v6
+    - name: Test
+      id: test
+      uses: vmactions/base-vm@message:Not Foundv0
+      with:
+        debug-on-error: true
+        vnc-password: ${{ secrets.VNC_PASSWORD }}
+
+...
+```
+
+You will be asked to input the username and password when you access the VNC link. The username can be any string, the password is the value of the `vnc-password` parameter.
+
+
+See more: [debug on error](https://github.com/vmactions/.github/wiki/debug%E2%80%90on%E2%80%90error)
 
 
 
