@@ -47,7 +47,6 @@ jobs:
       DEBUG: 1
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
-    - uses: actions/checkout@v6
     - name: Check arch
       id: check
       run: |
@@ -161,7 +160,6 @@ jobs:
       DEBUG: 1
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
-    - uses: actions/checkout@v6
     - name: Check arch
       id: check
       run: |
@@ -275,7 +273,6 @@ jobs:
       DEBUG: 1
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
-    - uses: actions/checkout@v6
     - name: Check arch
       id: check
       run: |
@@ -384,7 +381,6 @@ jobs:
       MYTOKEN2: "value2"
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
-    - uses: actions/checkout@v6
     - name: Check arch
       id: check
       run: |
@@ -466,7 +462,6 @@ jobs:
     runs-on: ubuntu-24.04
     name: test default error {{VM_NAME}}
     steps:
-    - uses: actions/checkout@v6
     - name: Test in {{VM_NAME}}
       id: testerr
       continue-on-error: true 
@@ -494,7 +489,6 @@ jobs:
     runs-on: ubuntu-24.04
     name: test default success {{VM_NAME}}
     steps:
-    - uses: actions/checkout@v6
     - name: Test in {{VM_NAME}}
       id: testpass
       continue-on-error: true 
