@@ -551,9 +551,15 @@ jobs:
         [ "$TEST_ENV" = "abc" ]
         ssh -v  -p 20022 ${VM_USER:-root}@localhost  "uname -a;whoami;pwd"
 
-    - name: Test custom shell
-      if: ${{ steps.check.outputs.run == 'true' }}
-      shell: ${{ matrix.customshell && matrix.customshell || '{{VM_OS_NAME}}' }} {0}
+    - name: Test custom shell (default)
+      if: ${{ steps.check.outputs.run == 'true' && !matrix.customshell }}
+      shell: {{VM_OS_NAME}} {0}
+      run: |
+        pwd
+{{VM_RUN}}
+    - name: Test custom shell (custom)
+      if: ${{ steps.check.outputs.run == 'true' && matrix.customshell }}
+      shell: ${{ matrix.customshell }} {0}
       run: |
         pwd
 {{VM_RUN}}
