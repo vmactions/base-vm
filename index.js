@@ -487,7 +487,7 @@ async function main() {
     // BlissOS (Android) guests ship no rsync and have no package manager to
     // install one over ssh; scp (baked into the image) is the only file-copy
     // channel, so the rsync default silently degrades to scp there.
-    if (sync === 'rsync' && inputOsName.includes('blissos')) {
+    if (!core.getInput("sync") && inputOsName.includes('blissos')) {
       sync = 'scp';
     }
 
