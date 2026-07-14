@@ -87,48 +87,71 @@ function parseConfig(filePath, initialEnv = {}) {
   return env;
 }
 
-function downloadFile(url, dest) {
+function downloadFileOnce(url, dest) {
   return new Promise((resolve, reject) => {
-    core.info(`Downloading ${url} to ${dest}`);
     const file = fs.createWriteStream(dest);
+    let settled = false;
+
+    const fail = (err) => {
+      if (settled) return;
+      settled = true;
+      file.destroy();
+      fs.unlink(dest, () => { });
+      reject(err);
+    };
 
     const handleResponse = (response) => {
       if (response.statusCode === 301 || response.statusCode === 302 || response.statusCode === 307 || response.statusCode === 308) {
         if (response.headers.location) {
           core.info(`Redirecting to ${response.headers.location}`);
-          https.get(response.headers.location, handleResponse).on('error', (err) => {
-            fs.unlink(dest, () => { });
-            reject(err);
-          });
+          https.get(response.headers.location, handleResponse).on('error', fail);
           return;
         }
       }
 
       if (response.statusCode !== 200) {
-        fs.unlink(dest, () => { });
-        reject(new Error(`Failed to download ${url}: Status Code ${response.statusCode}`));
+        fail(new Error(`Failed to download ${url}: Status Code ${response.statusCode}`));
         return;
       }
 
+      // A socket reset mid-body errors on the response stream, not the
+      // request; without this the file never 'finish'es and we hang forever.
+      response.on('error', fail);
       response.pipe(file);
     };
 
-    const request = https.get(url, handleResponse);
-
-    request.on('error', (err) => {
-      fs.unlink(dest, () => { });
-      reject(err);
-    });
+    https.get(url, handleResponse).on('error', fail);
 
     file.on('finish', () => {
+      if (settled) return;
+      settled = true;
       file.close(() => resolve());
     });
 
-    file.on('error', (err) => {
-      fs.unlink(dest, () => { });
-      reject(err);
-    });
+    file.on('error', fail);
   });
+}
+
+// Transient network errors (e.g. `read ECONNRESET` from raw.githubusercontent.com,
+// which killed freebsd-vm run 29292440869) should not fail the whole job:
+// retry a few times with a short growing backoff before giving up.
+async function downloadFile(url, dest, retries = 4) {
+  core.info(`Downloading ${url} to ${dest}`);
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      await downloadFileOnce(url, dest);
+      return;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < retries) {
+        const delayMs = 3000 * (attempt + 1);
+        core.warning(`Download failed: ${err.message}, retrying in ${delayMs / 1000}s (${attempt + 1}/${retries})...`);
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+    }
+  }
+  throw lastErr;
 }
 
 // Run `ssh ... sh` once, piping `input` to its stdin. Returns the exit code.
