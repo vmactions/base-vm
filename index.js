@@ -1201,6 +1201,33 @@ exit $rc
         await new Promise((r) => setTimeout(r, 10000));
       }
 
+      // anyvm writes ssh aliases as ~/.ssh/config.d/<port>.conf and
+      // <vm_name>.conf. The reboot may pick a DIFFERENT ssh port (the old one
+      // can linger in TIME_WAIT and fail anyvm's free-port probe), so it
+      // generates new files while the first boot's files still claim the same
+      // aliases -- and ssh reads config.d includes in lexical order with
+      // first-match-wins, resolving the alias to the dead port (tribblix-vm
+      // run 29497155045: alias kept port 10022, rebooted VM listened on
+      // 10023). Drop every config.d entry naming our alias before rebooting.
+      const sshConfD = path.join(process.env["HOME"], ".ssh", "config.d");
+      if (fs.existsSync(sshConfD)) {
+        const aliasRe = new RegExp(`^Host\\b.*\\b${sshHost}`, 'm');
+        for (const fname of fs.readdirSync(sshConfD)) {
+          if (!fname.endsWith('.conf')) {
+            continue;
+          }
+          const staleConf = path.join(sshConfD, fname);
+          try {
+            if (aliasRe.test(fs.readFileSync(staleConf, 'utf8'))) {
+              fs.unlinkSync(staleConf);
+              core.info(`Removed stale ssh config: ${staleConf}`);
+            }
+          } catch (e) {
+            core.warning(`Failed to check/remove ${staleConf}: ${e.message}`);
+          }
+        }
+      }
+
       // Reboot from the prepared qcow2 left in data-dir: drop --cache-dir (in
       // snapshot mode anyvm would boot the pristine cached image instead of
       // the prepared one) and add --snapshot.
