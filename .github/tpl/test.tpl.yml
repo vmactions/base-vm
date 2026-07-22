@@ -29,7 +29,7 @@ jobs:
       fail-fast: false
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x"]
+        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386"]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
         exclude:
           - runs: "ubuntu-24.04-arm"
@@ -44,6 +44,8 @@ jobs:
             arch: "ppc64le"
           - runs: "ubuntu-24.04-arm"
             arch: "s390x"
+          - runs: "ubuntu-24.04-arm"
+            arch: "i386"
 {{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}{{VM_TEST_EXCLUDE_SSHFS}}
 
     runs-on: ${{ matrix.runs }}
@@ -141,7 +143,7 @@ jobs:
       fail-fast: false
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x"]
+        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386"]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
         exclude:
           - runs: "ubuntu-24.04-arm"
@@ -156,6 +158,8 @@ jobs:
             arch: "ppc64le"
           - runs: "ubuntu-24.04-arm"
             arch: "s390x"
+          - runs: "ubuntu-24.04-arm"
+            arch: "i386"
 {{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
 
     runs-on: ${{ matrix.runs }}
@@ -246,7 +250,7 @@ jobs:
       fail-fast: false
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x"]
+        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386"]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
         exclude:
           - runs: "ubuntu-24.04-arm"
@@ -261,6 +265,8 @@ jobs:
             arch: "ppc64le"
           - runs: "ubuntu-24.04-arm"
             arch: "s390x"
+          - runs: "ubuntu-24.04-arm"
+            arch: "i386"
 {{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
 
     runs-on: ${{ matrix.runs }}
@@ -374,7 +380,7 @@ jobs:
       fail-fast: false
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x"]
+        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386"]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
         disableCache: [ "", "true"]
         exclude:
@@ -390,6 +396,8 @@ jobs:
             arch: "ppc64le"
           - runs: "ubuntu-24.04-arm"
             arch: "s390x"
+          - runs: "ubuntu-24.04-arm"
+            arch: "i386"
 {{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
 
 
@@ -474,7 +482,7 @@ jobs:
       fail-fast: false
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x"]
+        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386"]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
         exclude:
           - runs: "ubuntu-24.04-arm"
@@ -489,6 +497,8 @@ jobs:
             arch: "ppc64le"
           - runs: "ubuntu-24.04-arm"
             arch: "s390x"
+          - runs: "ubuntu-24.04-arm"
+            arch: "i386"
 {{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
 
 
