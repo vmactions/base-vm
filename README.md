@@ -222,6 +222,19 @@ It uses [the BaseVM 13.1](conf/default.release.conf) by default, you can use `re
 ...
 ```
 
+You can also give only the leading, `.` separated part of a release. The newest release that starts with it is used, so the workflow does not have to be edited for every point release:
+
+```yaml
+...
+    - name: Test
+      id: test
+      uses: vmactions/base-vm@v0
+      with:
+        release: "13"
+...
+```
+
+Here `release: "13"` runs the newest `13.x` release of BaseVM. Every leading part works the same way, this action ships 12, 13. Each part you give has to match in full, so a release that does not exist fails the job instead of quietly falling back to another one.
 
 ## 6. Select architecture
 
