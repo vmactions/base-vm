@@ -393,6 +393,48 @@ class TestMain(BumpCase):
         self.assertEqual(rc, 1)
         self.assertFalse(os.path.exists("conf/15.2.conf"))
 
+    def test_landed_out_written_on_builder_bump(self):
+        self.add("15.1.conf", conf_text())
+        fetch = Fetch({
+            "releases/latest": self._latest("v2.2.6"),
+            "v2.2.6/releases.json": self._index([rel("15.1"), rel("15.2")]),
+            "demo-15.1.qcow2.zst": b"ok",
+            "demo-15.2.qcow2.zst": b"ok",
+        })
+        rc = bump.main(["--landed-out", "landed.txt"], fetch=fetch)
+        self.assertEqual(rc, 0)
+        text = open("landed.txt", encoding="utf-8").read()
+        self.assertIn("builder 2.2.6", text)
+        self.assertIn("new conf 15.2", text)
+
+    def test_landed_out_absent_on_noop_and_check(self):
+        self.add("15.1.conf", conf_text())
+        fetch = Fetch({"releases/latest": self._latest("v2.2.5"),
+                       "anyvm/releases/latest": self._latest("v0.5.4")})
+        self.assertEqual(bump.main(["--landed-out", "landed.txt"],
+                                   fetch=fetch), 0)
+        self.assertFalse(os.path.exists("landed.txt"))
+        fetch2 = Fetch({
+            "releases/latest": self._latest("v2.2.6"),
+            "v2.2.6/releases.json": self._index([rel("15.1")]),
+            "demo-15.1.qcow2.zst": b"ok",
+        })
+        self.assertEqual(bump.main(["--check", "--landed-out",
+                                    "landed.txt"], fetch=fetch2), 0)
+        self.assertFalse(os.path.exists("landed.txt"))
+
+    def test_landed_out_includes_anyvm_follow(self):
+        self.add("15.1.conf", conf_text(anyvm="0.5.4"))
+        fetch = Fetch({
+            "builder/releases/latest": self._latest("v2.2.5"),
+            "anyvm/releases/latest": self._latest("v0.5.5"),
+            "v0.5.5/anyvm.py": b"#!python",
+        })
+        rc = bump.main(["--landed-out", "landed.txt"], fetch=fetch)
+        self.assertEqual(rc, 0)
+        self.assertIn("anyvm 0.5.5",
+                      open("landed.txt", encoding="utf-8").read())
+
     def test_anyvm_lockstep_follow_with_asset(self):
         self.add("15.1.conf", conf_text(anyvm="0.5.4"))
         fetch = Fetch({

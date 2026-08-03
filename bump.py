@@ -294,6 +294,11 @@ def main(argv=None, fetch=_fetch):
         description="propagate builder/anyvm releases into this *-vm repo")
     ap.add_argument("--check", action="store_true",
                     help="print the plan; write nothing")
+    ap.add_argument("--landed-out",
+                    help="write a summary line per change here after a "
+                         "successful bump, so the workflow can open the "
+                         "notification issue (never written on --check or "
+                         "a no-op run)")
     args = ap.parse_args(argv)
     if not os.path.isdir(CONF_DIR):
         sys.stderr.write("bump: no conf/ here; run from a *-vm repo root\n")
@@ -317,6 +322,7 @@ def main(argv=None, fetch=_fetch):
 
     rc = 0
     wrote = False
+    landed = []
 
     # ---- builder version ----
     try:
@@ -380,11 +386,13 @@ def main(argv=None, fetch=_fetch):
             n = rewrite_key("BUILDER_VERSION", latest,
                             only=[c["name"] for c in to_bump])
             log("BUILDER_VERSION=%s in %d conf(s)" % (latest, n))
+            landed.append("builder %s (%d conf(s))" % (latest, n))
             for p in plan:
                 path = os.path.join(CONF_DIR, p["name"])
                 with open(path, "w", encoding="utf-8", newline="") as f:
                     f.write(p["content"])
                 log("created conf/%s (from %s)" % (p["name"], p["template"]))
+                landed.append("new conf %s" % p["name"][:-len(".conf")])
             new_releases = [p["release"] for p in plan]
             if new_releases and append_test_releases(new_releases):
                 log("test.releases += %s"
@@ -415,12 +423,21 @@ def main(argv=None, fetch=_fetch):
         else:
             n = rewrite_key("ANYVM_VERSION", alatest)
             log("ANYVM_VERSION=%s in %d conf(s)" % (alatest, n))
+            landed.append("anyvm %s (%d conf(s))" % (alatest, n))
             wrote = True
     elif alatest:
         log("anyvm %s is current (latest %s)" % (cur_anyvm, alatest))
 
     if wrote:
         log("done; commit is the workflow's job")
+    if landed and args.landed_out and not args.check:
+        # A silent success is a miss: the maintainer should hear that a
+        # bump landed, because cutting the *-vm action release (what @v1
+        # users actually run) is still a human call. The workflow turns
+        # this file into a notification issue.
+        with open(args.landed_out, "w", encoding="utf-8",
+                  newline="\n") as f:
+            f.write("\n".join(landed) + "\n")
     return rc
 
 
