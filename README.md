@@ -65,7 +65,7 @@ jobs:
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Test in BaseVM
       id: test
       uses: vmactions/base-vm@v0
@@ -263,7 +263,7 @@ Support custom shell:
 ```yaml
 ...
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Start VM
       id: vm
       uses: vmactions/base-vm@v0
@@ -294,7 +294,7 @@ You can also use `custom-shell-name` to set a custom name for the shell wrapper:
 ```yaml
 ...
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Start VM
       id: vm
       uses: vmactions/base-vm@v0
