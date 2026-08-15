@@ -383,6 +383,11 @@ const REMOTE_RSYNC_PATH = `sh -c 'PATH=$PATH:/usr/local/bin:/usr/local/sbin:/usr
 // single-job, so a fixed port cannot collide.
 const TELNET_CTRL_PORT = 10023;
 
+// Pinned host port for a 9P guest's file channel (Plan 9). Same reason as
+// the control port above: the copyback runs in a SEPARATE anyvm process
+// (`--attach --pull-files`) which cannot discover a randomly chosen forward.
+const P9_PORT = 20564;
+
 // Run one command in a telnet-transport guest through `anyvm.py --attach`.
 // The attach exec is marker-based: it waits until the command actually
 // finishes (no fixed read window) and exits with the command's 0/1 status
@@ -1096,6 +1101,18 @@ async function main() {
           syncArg = 'sys-nfs';
         }
         args.push("--sync", syncArg);
+        // Same exclusions the rsync/scp paths already apply, which the tar
+        // and 9P backends had no way to receive: _actions holds this
+        // action's own node_modules (thousands of files the guest never
+        // needs), and shipping it is what made a ReactOS push spend half an
+        // hour and still not finish.
+        if (syncArg === 'tar' || syncArg === '9p') {
+          args.push("--sync-exclude", "_actions");
+          args.push("--sync-exclude", "_PipelineMapping");
+          if (!disableCache) {
+            args.push("--sync-exclude", "cache.tzst");
+          }
+        }
         args.push("-v", `${work}:${vmwork}`);
       }
     }
@@ -1108,6 +1125,9 @@ async function main() {
       // No ssh config to write; instead pin the control-channel forward so
       // the --attach calls below know where the running VM listens.
       args.push("--ssh-port", String(TELNET_CTRL_PORT));
+      if (sync === '9p') {
+        args.push("--p9-port", String(P9_PORT));
+      }
     } else {
       args.push("--ssh-name", sshHost);
     }
@@ -1591,14 +1611,20 @@ exit $rc
       const workspace = process.env['GITHUB_WORKSPACE'];
       if (workspace) {
         core.startGroup("Copyback artifacts");
-        if (sync === 'tar' && isTelnet) {
-          // Pull the synced tree back over the guest's telnet channel; the
-          // push happened at boot (anyvm --sync tar -v).
-          await exec.exec("python3", [
+        if (isTelnet && (sync === 'tar' || sync === '9p')) {
+          // Pull the synced tree back through the same channel the push used
+          // at boot: a tar stream over telnet, or the guest's 9P share for
+          // Plan 9. Neither push is a live mount, so without this the
+          // guest's output would never reach the runner.
+          const pullArgs = [
             anyvmPath, "--os", osName, "--attach",
-            "--ssh-port", String(TELNET_CTRL_PORT), "--pull-files",
-            "-v", `${work}:${vmwork}`,
-          ]);
+            "--ssh-port", String(TELNET_CTRL_PORT),
+          ];
+          if (sync === '9p') {
+            pullArgs.push("--sync", "9p", "--p9-port", String(P9_PORT));
+          }
+          pullArgs.push("--pull-files", "-v", `${work}:${vmwork}`);
+          await exec.exec("python3", pullArgs);
         } else if (sync === 'scp' || sync === 'tar') {
           // scp guests pull with cpio/tar over ssh; an ssh guest running
           // `sync: tar` (push done by anyvm at boot) reuses the same

@@ -441,6 +441,62 @@ jobs:
 
 
 
+  # 9P share (Plan 9 / 9front). Same one-leg shape and same string-grep gate
+  # as testtar above, and for the same reason: 9p is that guest's ONLY
+  # transport, so without this job a 9p-only repo would run no test at all --
+  # every other job here is gated on rsync/scp/sshfs/nfs/tar. Unlike tar this
+  # is a LIVE mount (the runner mounts the guest's exportfs through the kernel
+  # v9fs client), so there is no copy-back: a file the guest writes is already
+  # on the host, which is exactly what the verify step checks. The in-guest
+  # body is per-repo data (VM_9P_RUN / VM_9P_VERIFY) because this guest speaks
+  # rc, not POSIX sh.
+  test9p:
+    runs-on: ubuntu-24.04
+    name: 9p {{VM_NAME}}
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+    - uses: actions/checkout@v7
+    - name: Test in {{VM_NAME}}
+      if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', '9p') }}
+      id: test
+      uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
+      with:
+        mem: 4096
+        debug: true
+        sync: 9p
+        run: |
+{{VM_9P_RUN}}
+    - name: Verify 9P share on host
+      if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', '9p') }}
+      run: |
+        set -e
+        ls -lah "$HOME/work"
+{{VM_9P_VERIFY}}
+    - name: Collect VM debug artifacts
+      if: failure()
+      run: |
+        mkdir -p ./vm-debug-artifacts
+        find /home/runner/work/_actions -type d -name output 2>/dev/null | while read d; do
+          find "$d" -type f \( -name "*.log" -o -name "*.ppm" \) | while read f; do
+            rel="${f#/home/runner/work/_actions/}"
+            mkdir -p "./vm-debug-artifacts/$(dirname "$rel")"
+            cp "$f" "./vm-debug-artifacts/$rel"
+          done
+        done
+        echo "Collected:"
+        find ./vm-debug-artifacts -type f || true
+    - name: Upload VM debug artifacts
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: vm-debug-${{ github.job }}-${{ strategy.job-index }}
+        path: vm-debug-artifacts/
+        retention-days: 7
+        if-no-files-found: ignore
+
+
+
 
   test:
     strategy:
