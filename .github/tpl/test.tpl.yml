@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64"]
+        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64", "armv7"]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
         exclude:
           - runs: "ubuntu-24.04-arm"
@@ -46,6 +46,8 @@ jobs:
             arch: "i386"
           - runs: "ubuntu-24.04-arm"
             arch: "loongarch64"
+          - runs: "ubuntu-24.04-arm"
+            arch: "armv7"
 {{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}{{VM_TEST_EXCLUDE_SSHFS}}
 
     runs-on: ${{ matrix.runs }}
@@ -142,7 +144,7 @@ jobs:
       fail-fast: false
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64"]
+        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64", "armv7"]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
         exclude:
           - runs: "ubuntu-24.04-arm"
@@ -161,6 +163,8 @@ jobs:
             arch: "i386"
           - runs: "ubuntu-24.04-arm"
             arch: "loongarch64"
+          - runs: "ubuntu-24.04-arm"
+            arch: "armv7"
 {{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
 
     runs-on: ${{ matrix.runs }}
@@ -250,7 +254,7 @@ jobs:
       fail-fast: false
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64"]
+        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64", "armv7"]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
         exclude:
           - runs: "ubuntu-24.04-arm"
@@ -269,6 +273,8 @@ jobs:
             arch: "i386"
           - runs: "ubuntu-24.04-arm"
             arch: "loongarch64"
+          - runs: "ubuntu-24.04-arm"
+            arch: "armv7"
 {{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
 
     runs-on: ${{ matrix.runs }}
@@ -374,6 +380,66 @@ jobs:
 
 
 
+  # One-shot tar sync (push at boot, pull at the end). This is the ONLY
+  # transport the telnet guests (ReactOS, Redox, RISC OS) have, and a
+  # declared-but-otherwise-untested method on the ssh guests whose builders
+  # list it. ONE leg per repo, on purpose: default release, default arch --
+  # tar's transport does not vary per release, so a full matrix would only
+  # burn runners. The gate greps the rendered sync map JSON as a string
+  # ('tar' is not a substring of any other method name); a per-arch lookup
+  # would wrongly skip the repos with no x86_64 arch at all (ReactOS is
+  # i386-only, RISC OS armv7-only -- their default arch comes from
+  # DEFAULT_ARCH in conf/default.release.conf). The in-guest command body is
+  # per-repo data (VM_TAR_RUN / VM_TAR_VERIFY in datafile.ini): the telnet
+  # guests speak their own command languages, so no shared POSIX script can
+  # run everywhere. A repo that defines neither still tests boot + push +
+  # copyback.
+  testtar:
+    runs-on: ubuntu-24.04
+    name: tar {{VM_NAME}}
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+    - uses: actions/checkout@v7
+    - name: Test in {{VM_NAME}}
+      if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', 'tar') }}
+      id: test
+      uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
+      with:
+        mem: 4096
+        debug: true
+        sync: tar
+        run: |
+{{VM_TAR_RUN}}
+    - name: Verify tar copyback on host
+      if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', 'tar') }}
+      run: |
+        set -e
+        ls -lah "$HOME/work"
+{{VM_TAR_VERIFY}}
+    - name: Collect VM debug artifacts
+      if: failure()
+      run: |
+        mkdir -p ./vm-debug-artifacts
+        find /home/runner/work/_actions -type d -name output 2>/dev/null | while read d; do
+          find "$d" -type f \( -name "*.log" -o -name "*.ppm" \) | while read f; do
+            rel="${f#/home/runner/work/_actions/}"
+            mkdir -p "./vm-debug-artifacts/$(dirname "$rel")"
+            cp "$f" "./vm-debug-artifacts/$rel"
+          done
+        done
+        echo "Collected:"
+        find ./vm-debug-artifacts -type f || true
+    - name: Upload VM debug artifacts
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: vm-debug-${{ github.job }}-${{ strategy.job-index }}
+        path: vm-debug-artifacts/
+        retention-days: 7
+        if-no-files-found: ignore
+
+
 
 
   test:
@@ -381,7 +447,7 @@ jobs:
       fail-fast: false
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64"]
+        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64", "armv7"]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
         disableCache: [ "", "true"]
         exclude:
@@ -401,6 +467,8 @@ jobs:
             arch: "i386"
           - runs: "ubuntu-24.04-arm"
             arch: "loongarch64"
+          - runs: "ubuntu-24.04-arm"
+            arch: "armv7"
 {{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
 
 
@@ -484,7 +552,7 @@ jobs:
       fail-fast: false
       matrix:
         release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64"]
+        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64", "armv7"]
         runs: [ "ubuntu-24.04", "ubuntu-24.04-arm"]
         exclude:
           - runs: "ubuntu-24.04-arm"
@@ -503,6 +571,8 @@ jobs:
             arch: "i386"
           - runs: "ubuntu-24.04-arm"
             arch: "loongarch64"
+          - runs: "ubuntu-24.04-arm"
+            arch: "armv7"
 {{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
 
 
