@@ -1596,7 +1596,7 @@ exit $rc
           // push happened at boot (anyvm --sync tar -v).
           await exec.exec("python3", [
             anyvmPath, "--os", osName, "--attach",
-            "--ssh-port", String(TELNET_CTRL_PORT), "--pull",
+            "--ssh-port", String(TELNET_CTRL_PORT), "--pull-files",
             "-v", `${work}:${vmwork}`,
           ]);
         } else if (sync === 'scp' || sync === 'tar') {
