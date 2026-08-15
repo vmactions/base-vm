@@ -872,15 +872,18 @@ jobs:
       uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
       with:
         debug: true
-        # A command that exists nowhere, rather than `false`: this body is
-        # shared by every guest, and the agent guests do not run a POSIX
-        # shell. 9front has no /bin/false at all (probed live), so `false`
-        # only "worked" there by failing for the wrong reason; cmd.exe on
-        # ReactOS has neither. An unknown command name is the one thing sh,
-        # rc, cmd.exe and ion all report as a failure.
+        # A command that EXISTS and fails, rather than `false` or a made-up
+        # name. This body is shared by every guest and the agent guests do
+        # not run a POSIX shell: 9front has no /bin/false (probed live), and
+        # cmd.exe has none either. An unknown NAME is worse still -- ion on
+        # Redox aborts the whole line with "pipeline execution error", so the
+        # `|| marker` arm never runs and the exec waits out its full timeout
+        # (measured: rc 124 instead of a prompt failure). A failing `ls` is
+        # reported the ordinary way by sh, rc and ion, and cmd.exe treats the
+        # missing `ls` itself as a plain command failure.
         run: |
           echo this is an error
-          anyvm-no-such-command
+          ls /no/such/path
     - name: Verify that the previous step failed
       if: steps.testerr.outcome != 'failure'
       run: |
