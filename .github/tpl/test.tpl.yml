@@ -400,7 +400,20 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
+    # Sparse on purpose. The workspace IS the payload here, and this repo
+    # commits node_modules -- 4636 of its 4662 files, 35 MB of npm packages
+    # that prove nothing about the sync path. The agent guests move a few MB
+    # per minute (measured: 42 MB over 9P took 4.5 min each way), so a full
+    # checkout turns this job into an npm bulk-transfer benchmark -- it is
+    # what left the ReactOS push without a completion marker after 12
+    # minutes. The action under test is fetched into _actions, which the
+    # sync excludes anyway, so it is unaffected.
     - uses: actions/checkout@v7
+      with:
+        sparse-checkout: |
+          conf
+          .github
+        sparse-checkout-cone-mode: true
     - name: Test in {{VM_NAME}}
       if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', 'tar') }}
       id: test
@@ -456,7 +469,15 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
+    # Sparse for the same reason as testtar above: the workspace is the
+    # payload, and 35 MB of committed node_modules measures the guest's
+    # patience rather than the 9P path.
     - uses: actions/checkout@v7
+      with:
+        sparse-checkout: |
+          conf
+          .github
+        sparse-checkout-cone-mode: true
     - name: Test in {{VM_NAME}}
       if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', '9p') }}
       id: test
