@@ -886,7 +886,16 @@ jobs:
     runs-on: ubuntu-24.04
     name: test default error {{VM_NAME}}
     steps:
+    # Sparse, like testtar/test9p: this job runs with the repo's DEFAULT sync,
+    # which on the agent guests is the tar or 9P channel, and it would
+    # otherwise ship 35 MB of committed node_modules through it just to check
+    # that a failing command reports failure.
     - uses: actions/checkout@v7
+      with:
+        sparse-checkout: |
+          conf
+          .github
+        sparse-checkout-cone-mode: true
     - name: Test in {{VM_NAME}}
       id: testerr
       continue-on-error: true
@@ -922,7 +931,17 @@ jobs:
     runs-on: ubuntu-24.04
     name: test default success {{VM_NAME}}
     steps:
+    # Sparse, same reason as testerr above -- and this is the job the full
+    # payload actually broke: the ReactOS push spent 12 minutes on those
+    # node_modules and still had no completion marker, and the RISC OS
+    # copy-back corrupted its archive at that size while the small-payload
+    # tar job passed.
     - uses: actions/checkout@v7
+      with:
+        sparse-checkout: |
+          conf
+          .github
+        sparse-checkout-cone-mode: true
     - name: Test in {{VM_NAME}}
       id: testpass
       continue-on-error: true
