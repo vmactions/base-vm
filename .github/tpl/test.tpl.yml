@@ -853,7 +853,13 @@ jobs:
         retention-days: 7
         if-no-files-found: ignore
 
+  # Skipped on RISC OS: its guest agent is not a shell and has no status
+  # channel at all, so anyvm can only report that a command COMPLETED, never
+  # whether it succeeded. A test whose whole point is "this must come back
+  # failed" therefore cannot pass there, and pretending otherwise would just
+  # bake a permanent red into that repo.
   testerr:
+    if: ${{ !contains(github.repository, 'riscos') }}
     strategy:
       fail-fast: false
     runs-on: ubuntu-24.04
@@ -866,9 +872,15 @@ jobs:
       uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
       with:
         debug: true
+        # A command that exists nowhere, rather than `false`: this body is
+        # shared by every guest, and the agent guests do not run a POSIX
+        # shell. 9front has no /bin/false at all (probed live), so `false`
+        # only "worked" there by failing for the wrong reason; cmd.exe on
+        # ReactOS has neither. An unknown command name is the one thing sh,
+        # rc, cmd.exe and ion all report as a failure.
         run: |
-          echo "this is an error"
-          false
+          echo this is an error
+          anyvm-no-such-command
     - name: Verify that the previous step failed
       if: steps.testerr.outcome != 'failure'
       run: |
@@ -893,9 +905,14 @@ jobs:
       uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
       with:
         debug: true
+        # No `true` and no double quotes: this body runs on every guest, and
+        # the agent guests are not POSIX. 9front has no /bin/true (probed
+        # live -- "file does not exist: './true'", which is exactly why this
+        # job went red on plan9-vm), cmd.exe has none either, and rc treats
+        # double quotes as ordinary characters rather than stripping them.
+        # A bare echo is valid in sh, rc, cmd.exe and ion alike.
         run: |
-          echo "this is a normal command"
-          true
+          echo this is a normal command
     - name: Verify that the previous step succeeded
       if: steps.testpass.outcome != 'success'
       run: |
