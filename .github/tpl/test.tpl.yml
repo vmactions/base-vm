@@ -22,7 +22,21 @@ concurrency:
 
 
 jobs:
+  # The sync jobs are gated on two levels, and both are needed.
+  #
+  # Level 1 -- the VM_TEST_EXCLUDE_<METHOD> matrix excludes below (baked by
+  # generate.yml from the same per-arch map as the step `if:`s): drop the legs
+  # whose arch does not support this job's method, so they never spawn.
+  #
+  # Level 2 -- this job-level `if:`. When NO arch supports the method, level 1
+  # strips EVERY leg, and GitHub then runs the job ONCE with all matrix values
+  # empty instead of zero times (community discussion 179993, open and
+  # undocumented). That leftover leg would be one more green do-nothing job, so
+  # the repo-level gate turns it into a real skip. This is the string-grep form
+  # used by testtar/test9p, for the same reason it is used there: no method name
+  # is a substring of another method name or of any arch key in the map.
   testsshfs:
+    if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', 'sshfs') }}
     strategy:
       fail-fast: false
       matrix:
@@ -139,7 +153,9 @@ jobs:
 
 
 
+  # Two-level sync gating -- see the comment above testsshfs.
   testnfs:
+    if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', 'nfs') }}
     strategy:
       fail-fast: false
       matrix:
@@ -165,7 +181,7 @@ jobs:
             arch: "loongarch64"
           - runs: "ubuntu-24.04-arm"
             arch: "armv7"
-{{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
+{{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}{{VM_TEST_EXCLUDE_NFS}}
 
     runs-on: ${{ matrix.runs }}
     name: nfs {{VM_NAME}}
@@ -249,7 +265,9 @@ jobs:
 
 
 
+  # Two-level sync gating -- see the comment above testsshfs.
   testscp:
+    if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', 'scp') }}
     strategy:
       fail-fast: false
       matrix:
@@ -275,7 +293,7 @@ jobs:
             arch: "loongarch64"
           - runs: "ubuntu-24.04-arm"
             arch: "armv7"
-{{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
+{{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}{{VM_TEST_EXCLUDE_SCP}}
 
     runs-on: ${{ matrix.runs }}
     name: scp {{VM_NAME}}
@@ -395,6 +413,10 @@ jobs:
   # run everywhere. A repo that defines neither still tests boot + push +
   # copyback.
   testtar:
+    # Repo-level gate, same expression the steps below already use. Without it
+    # the guests whose builder does not list tar still spawn this job and green
+    # it with every step skipped.
+    if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', 'tar') }}
     runs-on: ubuntu-24.04
     name: tar {{VM_NAME}}
     env:
@@ -464,6 +486,9 @@ jobs:
   # body is per-repo data (VM_9P_RUN / VM_9P_VERIFY) because this guest speaks
   # rc, not POSIX sh.
   test9p:
+    # Repo-level gate -- see testtar. Only the 9p guests have this transport,
+    # so on every other repo this job was a green do-nothing.
+    if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', '9p') }}
     runs-on: ubuntu-24.04
     name: 9p {{VM_NAME}}
     env:
@@ -519,7 +544,11 @@ jobs:
 
 
 
+  # Two-level sync gating -- see the comment above testsshfs. This job and
+  # testcustomshell both exercise the default sync (rsync), so they share the
+  # rsync exclude file.
   test:
+    if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', 'rsync') }}
     strategy:
       fail-fast: false
       matrix:
@@ -546,7 +575,7 @@ jobs:
             arch: "loongarch64"
           - runs: "ubuntu-24.04-arm"
             arch: "armv7"
-{{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
+{{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}{{VM_TEST_EXCLUDE_RSYNC}}
 
 
     runs-on: ${{ matrix.runs }}
@@ -624,7 +653,9 @@ jobs:
 
 
 
+  # Two-level sync gating -- see the comment above testsshfs.
   testcustomshell:
+    if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', 'rsync') }}
     strategy:
       fail-fast: false
       matrix:
@@ -650,7 +681,7 @@ jobs:
             arch: "loongarch64"
           - runs: "ubuntu-24.04-arm"
             arch: "armv7"
-{{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}
+{{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}{{VM_TEST_EXCLUDE_RSYNC}}
 
 
     runs-on: ${{ matrix.runs }}
