@@ -1403,10 +1403,11 @@ exit $rc
 `;
     } else if (sync === 'scp') {
       // Same per-OS archive choices as the final copyback block: cpio -H
-      // ustar by default, plain tar on BlissOS (toybox cpio ignores -H
-      // ustar), runtime cpio probe on Haiku.
+      // ustar by default, plain tar on BlissOS and Alpine (toybox cpio
+      // ignores -H ustar, BusyBox cpio cannot write ustar at all), runtime
+      // cpio probe on Haiku.
       let shellPullRemote;
-      if (osName === 'blissos') {
+      if (osName === 'blissos' || osName === 'alpine') {
         shellPullRemote = `cd "${vmwork}" && tar -cf - --exclude .git .`;
       } else if (osName === 'haiku') {
         shellPullRemote = `cd "${vmwork}" && if command -v cpio >/dev/null 2>&1; then find . -name .git -prune -o -print | cpio -o -H ustar; else tar -cf - --exclude .git .; fi`;
@@ -1726,11 +1727,14 @@ exit $rc
           // `sync: tar` (push done by anyvm at boot) reuses the same
           // transport for the pull.
           let useCpio = true;
-          if (osName === 'blissos') {
-            // Toybox cpio ignores `-H ustar` and emits a newc cpio stream that
+          if (osName === 'blissos' || osName === 'alpine') {
+            // Neither guest can produce a ustar stream with cpio. Toybox cpio
+            // (BlissOS) ignores `-H ustar` and emits a newc cpio stream that
             // the host `tar -xf` rejects ("This does not look like a tar
-            // archive"). Toybox tar writes a standard, host-readable archive,
-            // so copy back with tar directly instead of cpio.
+            // archive"); BusyBox cpio (Alpine) has no ustar writer at all, so
+            // it prints its usage to stderr and sends zero bytes. Both ship a
+            // tar that writes a standard, host-readable archive, so copy back
+            // with tar directly instead of cpio.
             useCpio = false;
           } else if (osName === 'haiku') {
             try {
