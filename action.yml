@@ -4,7 +4,7 @@ inputs:
   osname:
     description: 'The OS name'
     required: true
-    default: '{{VM_NAME}}'
+    default: '{{VM_OS_NAME}}'
   prepare:
     description: 'Install some tools before CI runs'
     required: false
