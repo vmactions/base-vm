@@ -271,12 +271,12 @@ Support custom shell:
       with:
         sync: nfs
     - name: Custom shell step 1
-      shell:  {0}
+      shell: basevm {0}
       run: |
         pwd
         echo "this is step 1, running inside the VM"
     - name: Custom shell step 2
-      shell:  {0}
+      shell: basevm {0}
       run: |
         pwd
         echo "this is step 2, running inside the VM"
