@@ -654,37 +654,14 @@ jobs:
 
 
   # Two-level sync gating -- see the comment above testsshfs.
+  # Single job on the default release/arch: envs, nat and the custom shell
+  # are action-side features, not per-release or per-arch ones, so a full
+  # matrix only multiplied the runner time.
   testcustomshell:
     if: ${{ contains('{{VM_SYNC_METHODS_MAP}}', 'rsync') }}
     strategy:
       fail-fast: false
-      matrix:
-        release: [ {{TEST_RELEASES}}, ""]
-        arch: [ "aarch64", "", "riscv64", "powerpc64", "sparc64", "ppc64le", "s390x", "i386", "loongarch64", "armv7"]
-        runs: [ "ubuntu-26.04", "ubuntu-26.04-arm"]
-        exclude:
-          - runs: "ubuntu-26.04-arm"
-            arch: ""
-          - runs: "ubuntu-26.04-arm"
-            arch: "riscv64"
-          - runs: "ubuntu-26.04-arm"
-            arch: "powerpc64"
-          - runs: "ubuntu-26.04-arm"
-            arch: "sparc64"
-          - runs: "ubuntu-26.04-arm"
-            arch: "ppc64le"
-          - runs: "ubuntu-26.04-arm"
-            arch: "s390x"
-          - runs: "ubuntu-26.04-arm"
-            arch: "i386"
-          - runs: "ubuntu-26.04-arm"
-            arch: "loongarch64"
-          - runs: "ubuntu-26.04-arm"
-            arch: "armv7"
-{{VM_TEST_EXCLUDE}}{{VM_TEST_EXCLUDE_MISSING}}{{VM_TEST_EXCLUDE_RSYNC}}
-
-
-    runs-on: ${{ matrix.runs }}
+    runs-on: ubuntu-26.04
     name: customshell {{VM_NAME}}
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
@@ -693,7 +670,7 @@ jobs:
     steps:
     - uses: actions/checkout@v7
     - name: Test in {{VM_NAME}}
-      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')[matrix.arch == '' && 'x86_64' || matrix.arch], 'rsync') }}
+      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')['x86_64'], 'rsync') }}
       id: test
       uses: {{GITHUB_REPOSITORY}}@{{GITHUB_SHA}}
       with:
@@ -701,8 +678,6 @@ jobs:
         prepare: |
           {{VM_PREPARE}}
         mem: 4096
-        release: ${{ matrix.release }}
-        arch: ${{ matrix.arch }}
         nat: |
           "20022": "22"
           "8080": "80"
@@ -716,7 +691,7 @@ jobs:
           echo "TEST_ENV=abc" >>${GITHUB_ENV}
 {{VM_RUN}}
     - name: Test NAT
-      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')[matrix.arch == '' && 'x86_64' || matrix.arch], 'rsync') }}
+      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')['x86_64'], 'rsync') }}
       env:
         VM_USER: "{{VM_USER}}"
       run: |
@@ -726,7 +701,7 @@ jobs:
         ssh -v  -p 20022 ${VM_USER:-root}@localhost  "uname -a;whoami;pwd"
 
     - name: Test custom shell
-      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')[matrix.arch == '' && 'x86_64' || matrix.arch], 'rsync') }}
+      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')['x86_64'], 'rsync') }}
       shell: vmsh {0}
       run: |
         pwd
@@ -737,17 +712,17 @@ jobs:
     # its guest gets no GITHUB_WORKSPACE (SendEnv excluded), so the custom
     # shell does not run in the synced work tree.
     - name: Prepare custom shell sync test file on host
-      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')[matrix.arch == '' && 'x86_64' || matrix.arch], 'rsync') && !contains(github.repository, 'haiku') }}
+      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')['x86_64'], 'rsync') && !contains(github.repository, 'haiku') }}
       run: |
         echo "host-data" > hostfile.txt
     - name: Test custom shell file sync
-      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')[matrix.arch == '' && 'x86_64' || matrix.arch], 'rsync') && !contains(github.repository, 'haiku') }}
+      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')['x86_64'], 'rsync') && !contains(github.repository, 'haiku') }}
       shell: vmsh {0}
       run: |
         [ "$(cat hostfile.txt)" = "host-data" ]
         echo "vm-data" > vmfile.txt
     - name: Verify custom shell copyback on host
-      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')[matrix.arch == '' && 'x86_64' || matrix.arch], 'rsync') && !contains(github.repository, 'haiku') }}
+      if: ${{ contains(fromJSON('{{VM_SYNC_METHODS_MAP}}')['x86_64'], 'rsync') && !contains(github.repository, 'haiku') }}
       run: |
         set -e
         [ "$(cat vmfile.txt)" = "vm-data" ]
