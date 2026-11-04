@@ -65,6 +65,22 @@ def strip_v(tag):
     return tag[1:] if tag.startswith("v") else tag
 
 
+class _KeepHead(urllib.request.HTTPRedirectHandler):
+    """Follow a redirect with the same HEAD. Every release download
+    302s to a CDN, and Python before 3.13 re-issues a redirected HEAD as
+    a GET (3.13 keeps the method), so on a python 3.12 runner the
+    HEAD-only image/kernel probes below would start real downloads."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and req.get_method() == "HEAD":
+            new.method = "HEAD"
+        return new
+
+
+_OPENER = urllib.request.build_opener(_KeepHead())
+
+
 def _fetch(url, method="GET"):
     """GET returns the body; HEAD returns b"" on success. The image gate
     MUST use HEAD -- a *-vm image is >1 GB and there are dozens per repo,
@@ -76,7 +92,7 @@ def _fetch(url, method="GET"):
     if token and url.startswith(API):
         req.add_header("Authorization", "Bearer %s" % token)
     try:
-        with urllib.request.urlopen(req, timeout=60) as r:
+        with _OPENER.open(req, timeout=60) as r:
             return b"" if method == "HEAD" else r.read()
     except urllib.error.HTTPError as e:
         raise FetchError("HTTP %d" % e.code)
@@ -164,17 +180,53 @@ def fetch_release_index(osname, builder, fetch):
     return doc["releases"]
 
 
-def image_exists(osname, builder, tag, fetch):
-    # Existence check for the image asset, so a tag cut before its build
-    # finished is refused rather than pinned. HEAD, never GET: these are
-    # 1+ GB files and this runs for every to-be-pinned tag.
-    url = ("https://github.com/%s/%s-builder/releases/download/v%s/"
-           "%s-%s.qcow2.zst" % (BUILDER_ORG, osname, builder, osname, tag))
+def missing_assets(osname, builder, tag, fetch):
+    """The release files a conf pinned to v<builder> boots from that the
+    release does not carry (yet); [] when the tag is complete.
+
+    The image itself: HEAD, never GET -- these are 1+ GB files and this
+    runs for every to-be-pinned tag. Then its profile.json, which every
+    builder release ships beside each image (all 26 latest releases did,
+    checked 2026-11-04). The profile is a few hundred bytes, so it is
+    read: a machine_type=microvm profile boots a kernel published as a
+    separate asset (profile "kernel_asset"), and anyvm.py cannot start
+    that guest without it. The kernel comes from the builder's
+    release-files job, not from the image's own upload, so the image
+    being there proves nothing about it -- netbsd v2.2.8 shipped
+    11.1-microvm without its kernel and an image-only gate bumped to it.
+    """
+    base = ("https://github.com/%s/%s-builder/releases/download/v%s/"
+            % (BUILDER_ORG, osname, builder))
+    vm = "%s-%s" % (osname, tag)
+    missing = []
     try:
-        fetch(url, method="HEAD")
-        return True
+        fetch(base + vm + ".qcow2.zst", method="HEAD")
     except FetchError:
-        return False
+        missing.append(vm + ".qcow2.zst")
+    try:
+        profile = json.loads(fetch(base + vm + ".profile.json")
+                             .decode("utf-8"))
+    except FetchError:
+        return missing + [vm + ".profile.json"]
+    except ValueError:
+        return missing + [vm + ".profile.json (not JSON)"]
+    if not isinstance(profile, dict):
+        return missing + [vm + ".profile.json (not an object)"]
+    if profile.get("machine_type") == "microvm":
+        # The same test anyvm.py applies before it boots the guest, plus
+        # the type: a non-string name would crash here, not refuse.
+        kernel = profile.get("kernel_asset")
+        append = profile.get("kernel_append")
+        if not (kernel and isinstance(kernel, str)
+                and append and isinstance(append, str)):
+            missing.append(vm + ".profile.json (microvm without "
+                           "kernel_asset/kernel_append)")
+        else:
+            try:
+                fetch(base + kernel, method="HEAD")
+            except FetchError:
+                missing.append(kernel)
+    return missing
 
 
 def _seed_conf(template_bytes, builder, entry):
@@ -357,18 +409,18 @@ def main(argv=None, fetch=_fetch):
                 % (latest, ", ".join(left)))
         plan = plan_new_confs(index, latest)
         # Image gate BEFORE any write: every conf about to be pinned to
-        # v<latest> -- bumped or newly created -- must have its image
-        # asset. A tag cut before its build finished is refused whole.
+        # v<latest> -- bumped or newly created -- must have its image,
+        # profile and (microvm) kernel assets. A tag cut before its build
+        # finished is refused whole.
         missing = []
         for tag in ([c["tag"] for c in to_bump]
                     + [p["name"][:-len(".conf")] for p in plan]):
-            if not image_exists(osname, latest, tag, fetch):
-                missing.append(tag)
+            missing.extend(missing_assets(osname, latest, tag, fetch))
         if missing:
             sys.stderr.write(
-                "bump: v%s is missing image asset(s) for %s -- tag cut "
-                "before the build finished? not bumping\n"
-                % (latest, ", ".join(missing)))
+                "bump: v%s is missing release asset(s): %s -- tag cut "
+                "before the build finished, or never published? not "
+                "bumping\n" % (latest, ", ".join(missing)))
             return 1
         if args.check:
             log("would set BUILDER_VERSION=%s in %d conf(s)"

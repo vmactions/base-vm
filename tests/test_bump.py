@@ -1,8 +1,14 @@
+import contextlib
+import email.message
+import io
 import json
 import os
 import sys
 import tempfile
 import unittest
+import urllib.request
+import urllib.response
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import bump
@@ -48,6 +54,25 @@ class Fetch(object):
                     raise val
                 return b"" if method == "HEAD" else val
         raise bump.FetchError("HTTP 404")
+
+
+PC_PROFILE = json.dumps({"machine_type": "q35"}).encode()
+
+
+def microvm_profile(tag):
+    # The shape netbsd-builder's build.py writes for a VM_MICROVM conf.
+    return json.dumps({"machine_type": "microvm",
+                       "kernel_asset": "demo-%s-kernel" % tag,
+                       "kernel_append": "root=dk0 console=com rw"}).encode()
+
+
+def images(*tags):
+    """Fetch-table entries for complete, non-microvm images of `tags`."""
+    table = {}
+    for tag in tags:
+        table["demo-%s.qcow2.zst" % tag] = b"ok"
+        table["demo-%s.profile.json" % tag] = PC_PROFILE
+    return table
 
 
 class BumpCase(unittest.TestCase):
@@ -267,18 +292,132 @@ class TestGates(BumpCase):
 
     def test_image_check_uses_head_never_get(self):
         # images are >1 GB; a GET-based existence check would transfer
-        # tens of GB per nightly run and read each body into RAM
+        # tens of GB per nightly run and read each body into RAM. Only
+        # the small profile.json is read.
+        fetch = Fetch(dict(images("15.1"), **{
+            "demo-11.1-microvm.qcow2.zst": b"ok",
+            "demo-11.1-microvm.profile.json": microvm_profile("11.1-microvm"),
+            "demo-11.1-microvm-kernel": b"ok"}))
+        self.assertEqual(
+            bump.missing_assets("demo", "2.2.6", "15.1", fetch), [])
+        self.assertEqual(
+            bump.missing_assets("demo", "2.2.6", "11.1-microvm", fetch), [])
+        self.assertEqual(
+            bump.missing_assets("demo", "2.2.6", "9.9", fetch),
+            ["demo-9.9.qcow2.zst", "demo-9.9.profile.json"])
+        for url, method in fetch.seen:
+            self.assertEqual(method,
+                             "GET" if url.endswith(".profile.json")
+                             else "HEAD", url)
+
+    def test_redirected_head_stays_head(self):
+        # Release downloads 302 to a CDN, and python < 3.13 follows a
+        # redirected HEAD with a GET; a redirected GET stays a GET.
         seen = []
 
-        def fetch(url, method="GET"):
-            seen.append((url, method))
-            if "demo-15.1.qcow2.zst" in url:
-                return b""
-            raise bump.FetchError("HTTP 404")
+        class Transport(urllib.request.HTTPSHandler):
+            def https_open(self, req):
+                seen.append(req.get_method())
+                headers = email.message.Message()
+                code, msg = 200, "OK"
+                if len(seen) % 2:
+                    headers["Location"] = "https://cdn.test/asset"
+                    code, msg = 302, "Found"
+                resp = urllib.response.addinfourl(
+                    io.BytesIO(b"body"), headers, req.full_url, code)
+                resp.msg = msg
+                return resp
 
-        self.assertTrue(bump.image_exists("demo", "2.2.6", "15.1", fetch))
-        self.assertFalse(bump.image_exists("demo", "2.2.6", "9.9", fetch))
-        self.assertTrue(all(m == "HEAD" for _, m in seen))
+        opener = urllib.request.build_opener(
+            urllib.request.ProxyHandler({}), bump._KeepHead(), Transport())
+        with mock.patch.object(bump, "_OPENER", opener):
+            self.assertEqual(
+                bump._fetch("https://release.test/a", method="HEAD"), b"")
+            self.assertEqual(bump._fetch("https://release.test/a"), b"body")
+        self.assertEqual(seen, ["HEAD", "HEAD", "GET", "GET"])
+
+    def test_microvm_kernel_missing(self):
+        # netbsd v2.2.8: image and profile up, no 11.1-microvm kernel
+        fetch = Fetch({
+            "demo-11.1-microvm.qcow2.zst": b"ok",
+            "demo-11.1-microvm.profile.json": microvm_profile("11.1-microvm"),
+        })
+        self.assertEqual(
+            bump.missing_assets("demo", "2.2.8", "11.1-microvm", fetch),
+            ["demo-11.1-microvm-kernel"])
+        self.assertIn(("https://github.com/anyvm-org/demo-builder/releases/"
+                       "download/v2.2.8/demo-11.1-microvm-kernel", "HEAD"),
+                      fetch.seen)
+
+    def test_kernel_requires_the_exact_target_release(self):
+        # Exact URLs (no substring matching): the kernel must be at the
+        # release being pinned, not at an older one.
+        base = ("https://github.com/anyvm-org/demo-builder/releases/"
+                "download/v2.2.9/")
+        vm = "demo-11.1-microvm"
+        table = {
+            base + vm + ".qcow2.zst": b"ok",
+            base + vm + ".profile.json": microvm_profile("11.1-microvm"),
+            base.replace("/v2.2.9/", "/v2.2.8/") + vm + "-kernel": b"ok",
+        }
+        for have_kernel in (False, True):
+            if have_kernel:
+                table[base + vm + "-kernel"] = b"ok"
+            seen = []
+
+            def fetch(url, method="GET"):
+                seen.append((url, method))
+                if url not in table:
+                    raise bump.FetchError("HTTP 404")
+                return b"" if method == "HEAD" else table[url]
+
+            self.assertEqual(
+                bump.missing_assets("demo", "2.2.9", "11.1-microvm", fetch),
+                [] if have_kernel else [vm + "-kernel"])
+            self.assertEqual(seen, [(base + vm + ".qcow2.zst", "HEAD"),
+                                    (base + vm + ".profile.json", "GET"),
+                                    (base + vm + "-kernel", "HEAD")])
+
+    def test_pc_profile_needs_no_kernel(self):
+        fetch = Fetch(images("11.1"))
+        self.assertEqual(
+            bump.missing_assets("demo", "2.2.8", "11.1", fetch), [])
+        self.assertFalse(any("kernel" in u for u, _ in fetch.seen))
+
+    def test_profile_missing_or_malformed(self):
+        no_kernel = ("demo-15.1.profile.json (microvm without "
+                     "kernel_asset/kernel_append)")
+        cases = [
+            (None, "demo-15.1.profile.json"),
+            (b"<html>", "demo-15.1.profile.json (not JSON)"),
+            (b"", "demo-15.1.profile.json (not JSON)"),
+            (b"\xff", "demo-15.1.profile.json (not JSON)"),
+            (b"[]", "demo-15.1.profile.json (not an object)"),
+            (b"null", "demo-15.1.profile.json (not an object)"),
+            (json.dumps({"machine_type": "microvm"}).encode(), no_kernel),
+            (json.dumps({"machine_type": "microvm",
+                         "kernel_asset": "demo-15.1-kernel"}).encode(),
+             no_kernel),
+        ]
+        # A non-string name is as unusable as a missing one, and must be
+        # refused rather than crash the URL concatenation.
+        for field, value in (("kernel_asset", ["demo-15.1-kernel"]),
+                             ("kernel_asset", 17),
+                             ("kernel_append", ["root=dk0"])):
+            profile = {"machine_type": "microvm",
+                       "kernel_asset": "demo-15.1-kernel",
+                       "kernel_append": "root=dk0 console=com rw"}
+            profile[field] = value
+            cases.append((json.dumps(profile).encode(), no_kernel))
+        for body, want in cases:
+            table = {"demo-15.1.qcow2.zst": b"ok",
+                     "demo-15.1-kernel": b"ok"}
+            if body is not None:
+                table["demo-15.1.profile.json"] = body
+            with self.subTest(want=want):
+                self.assertEqual(
+                    bump.missing_assets("demo", "2.2.6", "15.1",
+                                        Fetch(table)), [want])
 
 
 class TestMain(BumpCase):
@@ -303,9 +442,7 @@ class TestMain(BumpCase):
             "releases/latest": self._latest("v2.2.6"),
             "v2.2.6/releases.json": self._index(
                 [rel("15.0"), rel("15.1"), rel("15.2")]),
-            "demo-15.0.qcow2.zst": b"ok",
-            "demo-15.1.qcow2.zst": b"ok",
-            "demo-15.2.qcow2.zst": b"ok",
+            **images("15.0", "15.1", "15.2"),
         })
         rc = bump.main([], fetch=fetch)
         self.assertEqual(rc, 0)
@@ -324,8 +461,7 @@ class TestMain(BumpCase):
         fetch = Fetch({
             "releases/latest": self._latest("v2.2.6"),
             "v2.2.6/releases.json": self._index([rel("15.1"), rel("15.2")]),
-            "demo-15.1.qcow2.zst": b"ok",
-            "demo-15.2.qcow2.zst": b"ok",
+            **images("15.1", "15.2"),
         })
         rc = bump.main(["--check"], fetch=fetch)
         self.assertEqual(rc, 0)
@@ -341,8 +477,7 @@ class TestMain(BumpCase):
         fetch = Fetch({
             "releases/latest": self._latest("v2.1.0"),
             "v2.1.0/releases.json": self._index([rel("7.9"), rel("8.0")]),
-            "demo-7.9.qcow2.zst": b"ok",
-            "demo-8.0.qcow2.zst": b"ok",
+            **images("7.9", "8.0"),
         })
         rc = bump.main([], fetch=fetch)
         self.assertEqual(rc, 0)
@@ -358,8 +493,8 @@ class TestMain(BumpCase):
         fetch = Fetch({
             "releases/latest": self._latest("v2.2.6"),
             "v2.2.6/releases.json": self._index([rel("15.0"), rel("15.1")]),
-            "demo-15.1.qcow2.zst": b"ok",
-            # demo-15.0.qcow2.zst missing -- half-built tag
+            **images("15.1"),
+            # demo-15.0 image + profile missing -- half-built tag
         })
         rc = bump.main([], fetch=fetch)
         self.assertEqual(rc, 1)
@@ -392,6 +527,73 @@ class TestMain(BumpCase):
         rc = bump.main([], fetch=fetch)
         self.assertEqual(rc, 1)
         self.assertFalse(os.path.exists("conf/15.2.conf"))
+
+    def _microvm_release(self, kernels):
+        # netbsd-vm before v2.2.8: 11.0 + 11.0-microvm; the new builder
+        # release adds 11.1 + 11.1-microvm (new confs).
+        self.add("11.0.conf", conf_text(builder="2.2.7"))
+        self.add("11.0-microvm.conf", conf_text(builder="2.2.7"))
+        write("conf/test.releases", '"11.0", "11.0-microvm"\n')
+        table = {
+            "releases/latest": self._latest("v2.2.8"),
+            "v2.2.8/releases.json": self._index(
+                [rel("11.0"), rel("11.0-microvm"),
+                 rel("11.1"), rel("11.1-microvm")]),
+            **images("11.0", "11.1"),
+        }
+        for tag in ("11.0-microvm", "11.1-microvm"):
+            table["demo-%s.qcow2.zst" % tag] = b"ok"
+            table["demo-%s.profile.json" % tag] = microvm_profile(tag)
+        for tag in kernels:
+            table["demo-%s-kernel" % tag] = b"ok"
+        return Fetch(table)
+
+    def test_missing_microvm_kernel_fails_all(self):
+        # the v2.2.8 shape: every image up, the 11.1-microvm kernel not
+        fetch = self._microvm_release(kernels=["11.0-microvm"])
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = bump.main([], fetch=fetch)
+        self.assertEqual(rc, 1)
+        self.assertIn("demo-11.1-microvm-kernel", err.getvalue())
+        for name in ("11.0.conf", "11.0-microvm.conf"):
+            self.assertIn(b"BUILDER_VERSION=2.2.7",
+                          open("conf/" + name, "rb").read())
+        self.assertFalse(os.path.exists("conf/11.1-microvm.conf"))
+        self.assertEqual(open("conf/test.releases").read(),
+                         '"11.0", "11.0-microvm"\n')
+
+    def test_gate_reports_all_missing_before_writes(self):
+        # Every missing asset across bumped and new confs is named in one
+        # refusal, and conf/ stays byte-identical.
+        fetch = self._microvm_release(kernels=["11.0-microvm"])
+        del fetch.table["demo-11.0.qcow2.zst"]
+        del fetch.table["demo-11.0.profile.json"]
+
+        def snapshot():
+            out = {}
+            for name in os.listdir("conf"):
+                with open(os.path.join("conf", name), "rb") as f:
+                    out[name] = f.read()
+            return out
+
+        before = snapshot()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = bump.main([], fetch=fetch)
+        self.assertEqual(rc, 1)
+        for asset in ("demo-11.0.qcow2.zst", "demo-11.0.profile.json",
+                      "demo-11.1-microvm-kernel"):
+            self.assertIn(asset, err.getvalue())
+        self.assertEqual(snapshot(), before)
+
+    def test_microvm_with_kernels_bumps(self):
+        fetch = self._microvm_release(kernels=["11.0-microvm",
+                                               "11.1-microvm"])
+        self.assertEqual(bump.main([], fetch=fetch), 0)
+        self.assertIn(b"BUILDER_VERSION=2.2.8",
+                      open("conf/11.0-microvm.conf", "rb").read())
+        self.assertTrue(os.path.exists("conf/11.1-microvm.conf"))
 
     def test_anyvm_lockstep_follow_with_asset(self):
         self.add("15.1.conf", conf_text(anyvm="0.5.4"))
